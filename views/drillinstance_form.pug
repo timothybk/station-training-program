@@ -1,0 +1,48 @@
+extend layout
+
+block content
+	h1=title
+
+	form(method='POST' action='')
+		.form-group
+			label(for='date') Date:
+			input#date.form-control(type='date' name='date' required='true' value=(undefined===drillinstance ? '' : drillinstance.date))
+		
+		.form-group
+			label(for='leader') Drill Leader:
+			select#leader.form-control(type='select' placeholder='Person conducting drill' name='leader' required='true')
+				for firefighter in firefighter_list
+					if drillinstance
+						option(value=firefighter._id selected=(firefighter._id.toString()==drillinstance.leader ? 'selected' : false)) #{firefighter.fulltitle}
+					else
+						option(value=firefighter._id) #{firefighter.fulltitle}
+
+		.form-group
+			label(for='Drill') Drill:
+			select#drill.form-control(type='select' placeholder='Drill conducted' name='drill' required='true')
+				for drill in drill_list
+					if drillinstance
+						option(value=drill._id selected=(drill._id.toString()==drillinstance.drill ? 'selected' : false)) 
+							!=drill.fulltitle
+					else
+						option(value=drill._id) 
+							!=drill.fulltitle
+
+		.form-group
+			label(for='Participant') Participants:
+			select#participant.form-control(type='select' placeholder='Person participating' name='participant' class='selectpicker' multiple required='true')
+				for firefighter in firefighter_list
+					if drillinstance
+						option(value=firefighter._id selected=(firefighter._id.toString()==drillinstance.participant ? 'selected' : false)) #{firefighter.fulltitle}
+					else
+						option(value=firefighter._id) #{firefighter.fulltitle}
+
+		button.btn.btn-primary(type='submit') Submit
+
+		if errors
+			ul
+				for error in errors
+					li!= error.msg
+
+
+

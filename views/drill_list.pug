@@ -1,0 +1,14 @@
+extends layout
+
+block content
+	h1= title
+
+	ul
+		each drill in list_drills
+			li
+				a(href=drill.url) #{drill.code}: 
+					!=drill.name
+
+		else
+			There are no drills saved
+

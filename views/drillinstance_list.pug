@@ -1,0 +1,14 @@
+extends layout
+
+block content
+	h1= title
+
+	div(style='margin-left:20px;margin-top:20px')
+		
+		each drillinstance in drillinstance_list
+			hr
+			a(href=drillinstance.url) #[strong Date: ] #{drillinstance.date_formatted}
+			p #[strong Drill: ] 
+				!=drillinstance.drill.fulltitle
+
+	

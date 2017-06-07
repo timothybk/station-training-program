@@ -1,0 +1,24 @@
+extends layout
+
+block content
+	
+	h1 Drill: #{drill.code}- 
+		!= drill.name
+	
+
+
+	div(style='margin-left:20px;margin-top:20px')
+
+		h4 FireFighters with Drill
+
+		dl
+			each drill in drillinstance_list
+				h3 #{drill.date_formatted}
+				each firefighter in drill.firefighters
+					dt
+						a(href=firefighter.url) 
+							!=firefighter.fulltitle
+					
+
+			else
+				p No fire fighters are qualified

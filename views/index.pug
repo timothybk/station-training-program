@@ -1,0 +1,17 @@
+extends layout
+
+block content
+	h1= title
+	p Welcome to #[em Drill Reporting], just a super simple reporting thing
+
+	h1 Dynamic content
+
+	if error
+		p Error getting dynamic content
+	else
+		p the Simple roster has the following record counts:
+
+		ul
+		li #[strong FireFighters:] !{data.firefighter_count}
+		li #[strong Drills:] !{data.drill_count}
+		li #[strong DrillInstance:] !{data.drillinstance_count}

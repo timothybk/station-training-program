@@ -1,0 +1,20 @@
+extends layout
+
+block content
+	h1 #{title}: #{firefighter.fulltitle}
+
+	p #[strong Brigade Number:] #{firefighter.number}
+	p #[strong Rank:] #{firefighter.rank}
+	p #[strong Name:] #{firefighter.name}
+	
+	div(style='margin-left:20px;margin-top:20px')
+		h4 Drills
+
+		each val in drillinstance_list
+			hr
+			a(href=val.url) #[strong Date: ] #{val.date_formatted}
+			p #[strong Drill: ] 
+				!= val.drill.fulltitle
+			
+
+	
