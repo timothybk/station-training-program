@@ -19,6 +19,13 @@ block content
 		.form-group
 			label(for='name') Name:
 			input#title.form-control(type='text', placeholder='FireFighter Name' name='name' required='true' value=(undefined===firefighter ? '' : firefighter.name))
+		.form-group
+			label Qualifications:
+			div
+				for qualification in qualification_list
+					div(style='display: inline; padding-right:10px;')
+						input.checkbox-input(type='checkbox', name='qualification' id=qualification._id, value=qualification._id, checked=qualification.checked)
+						label(for=qualification._id) #{qualification.name}
 		button.btn.btn-primary(type='submit') Submit
 
 	if errors
