@@ -6,6 +6,15 @@ block content
 	p #[strong Brigade Number:] #{firefighter.number}
 	p #[strong Rank:] #{firefighter.rank}
 	p #[strong Name:] #{firefighter.name}
+	p #[strong Qualifications: ] 
+	each qualification in firefighter.qualifications
+		p #{qualification.name}
+
+	hr
+	p
+		a(href=firefighter.url+'/delete') Delete
+	p
+		a(href=firefighter.url+'/update') Update
 	
 	div(style='margin-left:20px;margin-top:20px')
 		h4 Drills

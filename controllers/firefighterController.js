@@ -25,7 +25,7 @@ exports.index = function(req, res) {
 exports.firefighter_list = function(req, res, next) {
 
     FireFighter.find({}, 'name rank number')
-        //.populate('qualifications')
+        .sort('-rank _id')
         .exec(function(err, list_firefighter) {
             if (err) {
                 return next(err);
@@ -41,6 +41,7 @@ exports.firefighter_detail = function(req, res, next) {
         firefighter: function(callback) {
 
             FireFighter.findById(req.params.id)
+                .populate('qualifications')
                 .populate('drills')
                 .exec(callback);
         },
@@ -178,13 +179,64 @@ exports.firefighter_update_get = function(req, res, next) {
         res.render('firefighter_form', {
             title: 'Update FireFighter',
             firefighter: results.firefighter,
-            qualifications: results.qualifications
+            qualification_list: results.qualifications
         })
     });
 
 };
 
 // Handle firefighter update on POST
-exports.firefighter_update_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: FireFighter update POST');
+exports.firefighter_update_post = function(req, res, next) {
+    //sanitize id passed in
+    req.sanitize('id').escape();
+    req.sanitize('id').trim();
+
+    //Check other data
+    req.checkBody('number', 'Number must not be empty.').notEmpty();
+    req.checkBody('rank', 'Rank must not be empty.').notEmpty();
+    req.checkBody('name', 'Name must not be empty.').notEmpty();
+
+    req.sanitize('number').escape();
+    req.sanitize('rank').escape();
+    req.sanitize('name').escape();
+    req.sanitize('number').trim();
+    req.sanitize('rank').trim();
+    req.sanitize('name').trim();
+    req.sanitize('qualification').escape();
+
+    var firefighter = new FireFighter({
+        number: req.body.number,
+        rank: req.body.rank,
+        name: req.body.name,
+        qualifications: (typeof req.body.qualification === 'undefined') ? [] : req.body.qualification.split(","),
+        _id: req.params.id //stop a new id being assigned
+    });
+
+    var errors =req.validationErrors();
+    if (errors) {
+        //rerender ff with error info
+        //get all quals for form
+        Qualification.find({}, 'name')
+            .exec(function(err, qualifications) {
+                if (err) {
+                    return next(err);
+                }
+                //mark selected qualifications as checked
+                for (var i = 0; i < qualifications.length; i++) {
+                    if (firefighter.qualifications.indexOf(qualifications[i]._id > -1)) {
+                        //Current qualifications is selected. Set 'checked' flag.
+                        qualifications[i].checked = 'true';
+                    }
+                }
+                res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: qualifications, firefighter: firefighter, errors: errors });
+            });
+    }
+    else {
+        //data from form is valid. update record
+        FireFighter.findByIdAndUpdate(req.params.id, firefighter, {}, function (err, thefirefighter) {
+            if (err) {return next(err);}
+            //successfull -redirect to firefighter detail
+            res.redirect(thefirefighter.url);
+        });
+    }
 };

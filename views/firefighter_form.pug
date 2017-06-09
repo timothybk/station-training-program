@@ -10,12 +10,12 @@ block content
 		.form-group
 			label(for='rank') Rank:
 			select#author.form-control(type='select', placeholder='Select Rank' name='rank' required='true')
-				option Level 1
-				option Qualified Fire Fighter
-				option Senior Fire Fighter
-				option Senior Fire Fighter 15
-				option Leading Fire Fighter
-				option Station Officer
+				each val in ['Level 1', 'Qualified Fire Fighter', 'Senior Fire Fighter', 'Senior Fire Fighter 15', 'Leading Fire Fighter', 'Station Officer']
+					if firefighter
+						option(value=val selected=(val==firefighter.rank ? 'selected' : false)) #{val}
+					else
+						option(value=val) #{val}
+				
 		.form-group
 			label(for='name') Name:
 			input#title.form-control(type='text', placeholder='FireFighter Name' name='name' required='true' value=(undefined===firefighter ? '' : firefighter.name))
