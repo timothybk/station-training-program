@@ -63,13 +63,13 @@ exports.firefighter_detail = function(req, res, next) {
 // Display firefighter create form on GET
 exports.firefighter_create_get = function(req, res, next) {
     Qualification.find({}, 'name')
-    .exec(function (err, qualifications) {
-        if(err){
-            return next(err);
-        }
-    
-    res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: qualifications });
-    })
+        .exec(function(err, qualifications) {
+            if (err) {
+                return next(err);
+            }
+
+            res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: qualifications });
+        })
 };
 
 // Handle firefighter create on POST
@@ -100,7 +100,7 @@ exports.firefighter_create_post = function(req, res, next) {
     var errors = req.validationErrors();
     if (errors) {
         //some problems so form neads to be rerendered
-Qualification.find({}, 'name')
+        Qualification.find({}, 'name')
             .exec(function(err, qualifications) {
                 if (err) {
                     return next(err);
@@ -152,24 +152,35 @@ exports.firefighter_delete_post = function(req, res) {
 exports.firefighter_update_get = function(req, res, next) {
     req.sanitize('id').escape();
     req.sanitize('id').trim();
-    
+
     //Get firefighters, qualifications for form
     async.parallel({
-        firefighter: function (callback) {
+        firefighter: function(callback) {
             FireFighter.findById(req.params.id)
-            .populate('qualifications')
-            .exec(callback);
+                .populate('qualifications')
+                .exec(callback);
         },
-        qualifications: function (callback) {
+        qualifications: function(callback) {
             Qualification.find(callback);
         },
     }, function(err, results) {
-        if (err) {return next(err);
-    }
+        if (err) {
+            return next(err);
+        }
         //Mark selected qualifications as checked
-    for (var all_q_iter = 0; all_q_iter < results.qualifications.length; all_q_iter++; ) {
-        
-    }
+        for (var all_q_iter = 0; all_q_iter < results.qualifications.length; all_q_iter++) {
+            for (var ff_q_iter = 0; ff_q_iter < results.firefighter.qualifications.length; ff_q_iter++) {
+                if (results.qualifications[all_q_iter]._id.toString() == results.firefighter.qualifications[ff]._id.toString()) {
+                    results.qualifications[all_q_iter].checked = 'true';
+                }
+            }
+        }
+        res.render('firefighter_form', {
+            title: 'Update FireFighter',
+            firefighter: results.firefighter,
+            qualifications: results.qualifications
+        })
+    });
 
 };
 
