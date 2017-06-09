@@ -170,7 +170,7 @@ exports.firefighter_update_get = function(req, res, next) {
         //Mark selected qualifications as checked
         for (var all_q_iter = 0; all_q_iter < results.qualifications.length; all_q_iter++) {
             for (var ff_q_iter = 0; ff_q_iter < results.firefighter.qualifications.length; ff_q_iter++) {
-                if (results.qualifications[all_q_iter]._id.toString() == results.firefighter.qualifications[ff]._id.toString()) {
+                if (results.qualifications[all_q_iter]._id.toString() == results.firefighter.qualifications[ff_q_iter]._id.toString()) {
                     results.qualifications[all_q_iter].checked = 'true';
                 }
             }
