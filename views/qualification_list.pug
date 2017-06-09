@@ -1,0 +1,12 @@
+extends layout
+
+block content
+
+    h1= title
+    
+    div(style='margin-left:20px;margin-top:20px')
+        h4 Qualifications
+
+        each val in list_qualification
+            hr
+            a(href=val.url) #[strong Name: ] #{val.name}

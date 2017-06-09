@@ -18,7 +18,7 @@ exports.drillinstance_list = function(req, res, next) {
 };
 
 // Display detail page for a specific DrillInstance
-exports.drillinstance_detail = function(req, res) {
+exports.drillinstance_detail = function(req, res, next) {
     DrillInstance.findById(req.params.id)
         .populate('firefighters')
         .populate('leader')
@@ -44,6 +44,9 @@ exports.drillinstance_create_get = function(req, res, next) {
                 .exec(callback);
         },
     }, function(err, results) {
+        if (err) {
+            return next(err);
+        }
         res.render('drillinstance_form', {
             title: 'Record Completed Drill',
             firefighter_list: results.firefighter_list,
@@ -71,7 +74,7 @@ exports.drillinstance_create_post = function(req, res, next) {
     //run validators
     var errors = req.validationErrors();
 
-    drillinstance = new DrillInstance({
+    var drillinstance = new DrillInstance({
         date: req.body.date,
         leader: req.body.leader,
         drill: req.body.drill,

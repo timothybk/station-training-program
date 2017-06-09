@@ -129,8 +129,9 @@ exports.firefighter_delete_post = function(req, res) {
 };
 
 // Display firefighter update form on GET
-exports.firefighter_update_get = function(req, res) {
-    res.send('NOT IMPLEMENTED: FireFighter update GET');
+exports.firefighter_update_get = function(req, res, next) {
+    // req.sanitize('id').escape();
+    // req
 };
 
 // Handle firefighter update on POST

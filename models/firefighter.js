@@ -5,7 +5,8 @@ var Schema = mongoose.Schema;
 var FireFighterSchema = Schema({
     number: Number,
     rank: String,
-    name: String
+    name: String,
+    qualifications: [{type: Schema.ObjectId, ref: 'Qualification'}]
 });
 
 //virtual for ff's full title
