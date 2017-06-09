@@ -163,8 +163,14 @@ exports.firefighter_update_get = function(req, res, next) {
         qualifications: function (callback) {
             Qualification.find(callback);
         },
+    }, function(err, results) {
+        if (err) {return next(err);
+    }
+        //Mark selected qualifications as checked
+    for (var all_q_iter = 0; all_q_iter < results.qualifications.length; all_q_iter++; ) {
         
-    })
+    }
+
 };
 
 // Handle firefighter update on POST
