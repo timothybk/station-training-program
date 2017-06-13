@@ -180,6 +180,36 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 })
             })
         },
+        md_rankings: function(callback) {
+            ShiftInstance.aggregate([{
+                    $match: {
+                        md: true
+                    }
+                }, {
+                    $group: {
+                        _id: '$firefighter',
+                        count: { $sum: 1 }
+                    }
+                }, {
+                    $sort: {
+                        count: 1
+                    }
+                }
+
+            ], function(err, result) {
+                if (err) {
+                    return next(err);
+                }
+                FireFighter.populate(result, { path: '_id' }, function(err, newResult) {
+
+                    if (err) {
+                        return next(err);
+                    }
+
+                    callback(null, newResult);
+                })
+            })
+        },
     }, function(err, results) {
         if (err) {
             return next(err);
@@ -189,6 +219,7 @@ exports.shiftinstance_create_get = function(req, res, next) {
         var rescue_pump_array = [];
         var salvage_array = [];
         var bronto_array = [];
+        var md_array = [];
         //create an array from mongooose results
         for (var i = 0; i < results.firefighter_list.length; i++) {
             flyer_array.push(results.firefighter_list[i])
@@ -254,8 +285,21 @@ exports.shiftinstance_create_get = function(req, res, next) {
 
             }
         }
+        //create an array from mongooose results
+        for (var i = 0; i < results.firefighter_list.length; i++) {
+            md_array.push(results.firefighter_list[i])
+        }
+        //find names with previous shift instance and move to end of list
+        for (var i = 0; i < results.md_rankings.length; i++) {
+            for (var j = 0; j < md_array.length; j++) {
+                if (md_array[j].name == results.md_rankings[i]._id.name) {
+                    md_array.push(md_array.splice(j, 1)[0])
+                }
 
-        console.log(flyer_array, runner_array, rescue_pump_array, salvage_array, bronto_array);
+            }
+        }
+
+        
         res.render('shiftinstance_form', {
             title: 'Shift create form',
             appliance_list: results.appliance_list,
@@ -263,7 +307,8 @@ exports.shiftinstance_create_get = function(req, res, next) {
             runner_list: runner_array,
             rescue_pump_list: rescue_pump_array,
             salvage_list: salvage_array,
-            bronto_list: bronto_array
+            bronto_list: bronto_array,
+            md_list: md_array
         })
 
     });
@@ -370,7 +415,6 @@ exports.shiftinstance_create_post = function(req, res) {
         if (err) {
             return next(err);
         }
-        console.log(appliance_arr);
         res.send('success')
     })
 };
