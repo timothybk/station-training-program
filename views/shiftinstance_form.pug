@@ -1,0 +1,106 @@
+extends layout
+
+block content
+
+	h1=title
+
+	form(method='POST' action='')
+		.form-group
+			label(for='date') Date:
+			input#date.form-control(type='date' name='date' required='true' value=(undefined===shiftinstance ? '' : shiftinstance.date))
+
+		.form-group
+			label(for='shift') Shift:
+			select#shift.form-control(type='select' placeholder='Day/Night' name='shift' required='true')
+				option(value='day') Day Shift
+				option(value='night') Night Shift
+
+		each appliance in appliance_list
+			hr
+			each seat in appliance.seats
+				.form-group
+					label(for=appliance.name + seat) #{appliance.name} #{seat}
+					select(id=appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=appliance.name + seat, required='true')
+						if appliance.name == 'flyer'
+							each firefighter in flyer_list
+								if (firefighter.rank != 'Station Officer')
+									if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
+										each val in firefighter.qualifications
+											if (val.name == 'md')
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else if (appliance.qualifications.length > 0)
+										each val in firefighter.qualifications
+											if (val.name == appliance.qualifications[0].name)
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else
+										option(value=firefighter._id) #{firefighter.fulltitle}
+						else if appliance.name == 'runner'
+							each firefighter in runner_list
+								if (firefighter.rank != 'Station Officer')
+									if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
+										each val in firefighter.qualifications
+											if (val.name == 'md')
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else if (appliance.qualifications.length > 0)
+										each val in firefighter.qualifications
+											if (val.name == appliance.qualifications[0].name)
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else
+										option(value=firefighter._id) #{firefighter.fulltitle}
+						else if appliance.name == 'rescuepump'
+							each firefighter in rescue_pump_list
+								if (firefighter.rank != 'Station Officer')
+									if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
+										each val in firefighter.qualifications
+											if (val.name == 'md')
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else if (appliance.qualifications.length > 0)
+										each val in firefighter.qualifications
+											if (val.name == appliance.qualifications[0].name)
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else
+										option(value=firefighter._id) #{firefighter.fulltitle}
+						else if appliance.name == 'salvage'
+							each firefighter in salvage_list
+								if (firefighter.rank != 'Station Officer')
+									if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
+										each val in firefighter.qualifications
+											if (val.name == 'md')
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else if (appliance.qualifications.length > 0)
+										each val in firefighter.qualifications
+											if (val.name == appliance.qualifications[0].name)
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else
+										option(value=firefighter._id) #{firefighter.fulltitle}
+						else if appliance.name == 'bronto'
+							each firefighter in bronto_list
+								if (firefighter.rank != 'Station Officer')
+									if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
+										each val in firefighter.qualifications
+											if (val.name == 'md')
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else if (appliance.qualifications.length > 0)
+										each val in firefighter.qualifications
+											if (val.name == appliance.qualifications[0].name)
+												option(value=firefighter._id) #{firefighter.fulltitle}
+									else
+										option(value=firefighter._id) #{firefighter.fulltitle}
+
+		button.btn.btn-primary(type='submit') Submit
+
+		//- each appliance in appliance_list
+		//- 	hr
+		//- 	each seat in appliance.seats
+		//- 		.form-group
+		//- 			label(for=appliance.name + seat) #{appliance.name} #{seat}
+		//- 			select(id=appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=appliance.name + seat, required='true')
+		//- 				each val in flyer_rankings
+		//- 					if (val._id.rank != 'Station Officer')
+		//- 						if (appliance.qualifications.length > 0)
+		//- 							each one in val._id.qualifications
+		//- 								if (one.name == appliance.qualifications[0].name)
+		//- 									option(value=val._id._id) #{val._id.fulltitle}
+		//- 						else
+		//- 							option(value=val._id._id) #{val._id.fulltitle}
+		//- button.btn.btn-primary(type='submit') Submit
