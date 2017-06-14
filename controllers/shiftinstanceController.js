@@ -11,9 +11,21 @@ exports.shiftinstance_list = function(req, res) {
     res.send('NOT IMPLEMENTED: ShifTinstance list');
 };
 
-// Display detail page for a specific ShifTinstance
-exports.shiftinstance_detail = function(req, res) {
-    res.send('NOT IMPLEMENTED: ShifTinstance detail: ' + req.params.id);
+// Display detail page for a specific ShiftInstance
+exports.shiftinstance_detail = function(req, res, next) {
+    ShiftInstance.findById(req.params.id)
+        .populate('firefighter')
+        .populate('pump')
+        .exec(function(err, result) {
+            if (err) {
+                return next(err);
+            }
+            //success so render
+            res.render('shiftinstance_detail', {
+                title: 'FireFighter:',
+                shiftinstance: result
+            });
+        });
 };
 
 // Display ShiftInstance create form on GET
@@ -31,34 +43,59 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 .exec(callback)
         },
         flyer_rankings: function(callback) {
-            ShiftInstance.aggregate([{
-                    $match: {
-                        pump: 'flyer'
-                    }
-                }, {
-                    $group: {
-                        _id: '$firefighter',
-                        count: { $sum: 1 }
-                    }
-                }, {
-                    $sort: {
-                        count: 1
-                    }
-                }
+            async.waterfall([
+                function(callback) {
+                    var pumper = ShiftInstance.findByName('flyer', function(err, pump) {
+                        if (err) {
+                            res.send(err);
+                        }
+                    });
+                    callback(null, pumper)
+                },
+                function(pumper, callback) {
+                    var count_populated;
+                    ShiftInstance.aggregate([{
+                            $match: {
+                                _id: pumper._id
+                            }
+                        }, {
+                            $group: {
+                                _id: '$firefighter',
+                                count: {
+                                    $sum: 1
+                                }
+                            }
+                        }, {
+                            $sort: {
+                                count: 1
+                            }
+                        }
 
-            ], function(err, result) {
+                    ], function(err, counts) {
+                        if (err) {
+                            return next(err);
+                        }
+                        FireFighter.populate(counts, {
+                            path: '_id'
+                        }, function(err, counts) {
+                            if (err) {
+                                return next(err);
+                            }
+                            console.log(pumper);
+                            count_populated = counts;
+                            console.log(count_populated);
+                        })
+                    })
+                    callback(null, count_populated);
+                }
+            ], function(err, newResult) {
                 if (err) {
                     return next(err);
                 }
-                FireFighter.populate(result, { path: '_id' }, function(err, newResult) {
-
-                    if (err) {
-                        return next(err);
-                    }
-
-                    callback(null, newResult);
-                })
-            })
+                else {
+                    callback(newResult);
+                }
+            });
         },
         runner_rankings: function(callback) {
             ShiftInstance.aggregate([{
@@ -68,7 +105,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 }, {
                     $group: {
                         _id: '$firefighter',
-                        count: { $sum: 1 }
+                        count: {
+                            $sum: 1
+                        }
                     }
                 }, {
                     $sort: {
@@ -80,7 +119,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 if (err) {
                     return next(err);
                 }
-                FireFighter.populate(result, { path: '_id' }, function(err, newResult) {
+                FireFighter.populate(result, {
+                    path: '_id'
+                }, function(err, newResult) {
 
                     if (err) {
                         return next(err);
@@ -98,7 +139,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 }, {
                     $group: {
                         _id: '$firefighter',
-                        count: { $sum: 1 }
+                        count: {
+                            $sum: 1
+                        }
                     }
                 }, {
                     $sort: {
@@ -110,7 +153,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 if (err) {
                     return next(err);
                 }
-                FireFighter.populate(result, { path: '_id' }, function(err, newResult) {
+                FireFighter.populate(result, {
+                    path: '_id'
+                }, function(err, newResult) {
 
                     if (err) {
                         return next(err);
@@ -128,7 +173,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 }, {
                     $group: {
                         _id: '$firefighter',
-                        count: { $sum: 1 }
+                        count: {
+                            $sum: 1
+                        }
                     }
                 }, {
                     $sort: {
@@ -140,7 +187,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 if (err) {
                     return next(err);
                 }
-                FireFighter.populate(result, { path: '_id' }, function(err, newResult) {
+                FireFighter.populate(result, {
+                    path: '_id'
+                }, function(err, newResult) {
 
                     if (err) {
                         return next(err);
@@ -158,7 +207,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 }, {
                     $group: {
                         _id: '$firefighter',
-                        count: { $sum: 1 }
+                        count: {
+                            $sum: 1
+                        }
                     }
                 }, {
                     $sort: {
@@ -170,7 +221,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 if (err) {
                     return next(err);
                 }
-                FireFighter.populate(result, { path: '_id' }, function(err, newResult) {
+                FireFighter.populate(result, {
+                    path: '_id'
+                }, function(err, newResult) {
 
                     if (err) {
                         return next(err);
@@ -188,7 +241,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 }, {
                     $group: {
                         _id: '$firefighter',
-                        count: { $sum: 1 }
+                        count: {
+                            $sum: 1
+                        }
                     }
                 }, {
                     $sort: {
@@ -200,7 +255,9 @@ exports.shiftinstance_create_get = function(req, res, next) {
                 if (err) {
                     return next(err);
                 }
-                FireFighter.populate(result, { path: '_id' }, function(err, newResult) {
+                FireFighter.populate(result, {
+                    path: '_id'
+                }, function(err, newResult) {
 
                     if (err) {
                         return next(err);
@@ -299,7 +356,7 @@ exports.shiftinstance_create_get = function(req, res, next) {
             }
         }
 
-        
+
         res.render('shiftinstance_form', {
             title: 'Shift create form',
             appliance_list: results.appliance_list,
@@ -372,7 +429,7 @@ exports.shiftinstance_create_post = function(req, res, next) {
                     shiftinstance_array[total] = new ShiftInstance({
                         date: req.body.date,
                         firefighter: req.body[appliance_arr[i].name + appliance_arr[i].seats[j]],
-                        pump: appliance_arr[i].name,
+                        pump: appliance_arr[i],
                         shift: req.body.shift,
                         md: isMD
                     });
@@ -393,10 +450,16 @@ exports.shiftinstance_create_post = function(req, res, next) {
 
                         }
                         //successful fo render
-                        res.render('shiftinstance_form', { title: 'Create ShiftInstance', firefighter_list: firefighters, shiftinstance: shiftinstance, errors: errors });
+                        res.render('shiftinstance_form', {
+                            title: 'Create ShiftInstance',
+                            firefighter_list: firefighters,
+                            shiftinstance: shiftinstance_array[total],
+                            errors: errors
+                        });
                     });
                 return;
-            } else {
+            }
+            else {
                 //Data from form is valid
                 async.each(shiftinstance_array, function(shiftinstance, callback) {
                     shiftinstance.save();
@@ -415,8 +478,8 @@ exports.shiftinstance_create_post = function(req, res, next) {
         if (err) {
             return next(err);
         }
-        
-        res.redirect('shiftinstance_create_get')
+
+        res.redirect('create')
     })
 };
 

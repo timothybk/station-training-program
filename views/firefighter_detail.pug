@@ -24,6 +24,15 @@ block content
 			a(href=val.url) #[strong Date: ] #{val.date_formatted}
 			p #[strong Drill: ] 
 				!= val.drill.fulltitle
+				
+	div(style='margin-left:20px;margin-top:20px')
+		h4 Shifts
+
+		each val in shiftinstance_list
+			hr
+			a(href=val.url) #[strong Date: ] #{val.date_formatted}
+			p #[strong Pump: ] 
+				!= val.pump.name
 			
 
 	

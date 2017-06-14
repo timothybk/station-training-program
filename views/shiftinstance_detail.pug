@@ -1,0 +1,12 @@
+extends layout
+
+block content
+
+    h1 #{shiftinstance.date_formatted} #{shiftinstance.shift}
+
+    p #[strong FireFighter: ]
+        a(href=shiftinstance.firefighter.url) #{shiftinstance.firefighter.name}
+    p #[strong Pump: ] #{shiftinstance.pump.name}
+            
+        
+	

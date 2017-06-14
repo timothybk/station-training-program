@@ -2,6 +2,7 @@ var FireFighter = require('../models/firefighter');
 var Drill = require('../models/drill');
 var DrillInstance = require('../models/drillinstance');
 var Qualification = require('../models/qualification');
+var ShiftInstance = require('../models/shiftinstance')
 
 var async = require('async');
 
@@ -52,11 +53,17 @@ exports.firefighter_detail = function(req, res, next) {
                 .sort('-date')
                 .exec(callback);
         },
+        
+        shiftinstance_list: function (callback) {
+            ShiftInstance.find({'firefighter': req.params.id})
+            .populate('pump')
+            .exec(callback);
+        },
     }, function(err, results) {
         if (err) {
             return next(err);
         }
-        res.render('firefighter_detail', { title: 'FireFighter', firefighter: results.firefighter, drillinstance_list: results.drillinstance_list });
+        res.render('firefighter_detail', { title: 'FireFighter', firefighter: results.firefighter, drillinstance_list: results.drillinstance_list, shiftinstance_list: results.shiftinstance_list });
     })
 
 };

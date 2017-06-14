@@ -60,7 +60,7 @@ block content
 										if (val.name == 'md' && firefighter.rank != 'Station Officer')
 											option(value=firefighter._id) #{firefighter.fulltitle}
 							else if (seat == 'three')
-								each firefighter in rescupump_list
+								each firefighter in rescue_pump_list
 									if (firefighter.rank != 'Station Officer')
 										option(value=firefighter._id) #{firefighter.fulltitle}
 							else if (appliance.qualifications.length > 0)
@@ -70,7 +70,7 @@ block content
 											if (val.name == appliance.qualifications[0].name)
 												option(value=firefighter._id) #{firefighter.fulltitle}
 							else
-								each firefighter in rescupump_list
+								each firefighter in rescue_pump_list
 									if (firefighter.rank != 'Station Officer')
 										option(value=firefighter._id) #{firefighter.fulltitle}
 						if appliance.name == 'salvage'
