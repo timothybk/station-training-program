@@ -59,6 +59,10 @@ block content
 									each val in firefighter.qualifications
 										if (val.name == 'md' && firefighter.rank != 'Station Officer')
 											option(value=firefighter._id) #{firefighter.fulltitle}
+							else if (seat == 'three')
+								each firefighter in rescupump_list
+									if (firefighter.rank != 'Station Officer')
+										option(value=firefighter._id) #{firefighter.fulltitle}
 							else if (appliance.qualifications.length > 0)
 								each firefighter in rescue_pump_list
 									if (firefighter.rank != 'Station Officer')

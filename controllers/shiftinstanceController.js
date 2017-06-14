@@ -315,7 +315,7 @@ exports.shiftinstance_create_get = function(req, res, next) {
 };
 
 // Handle ShiftInstance create on POST
-exports.shiftinstance_create_post = function(req, res) {
+exports.shiftinstance_create_post = function(req, res, next) {
     var appliance_arr = [];
     var shiftinstance_array = [];
 
@@ -415,7 +415,8 @@ exports.shiftinstance_create_post = function(req, res) {
         if (err) {
             return next(err);
         }
-        res.send('success')
+        
+        res.redirect('shiftinstance_create_get')
     })
 };
 
