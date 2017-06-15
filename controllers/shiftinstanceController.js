@@ -40,7 +40,8 @@ exports.shiftinstance_create_get = function(req, res, next) {
                             .populate('qualifications')
                             .exec(function(err, results) {
                                 if (err) {
-                                    return next(err); }
+                                    return next(err);
+                                }
                                 callback(null, results)
                             });
                     },
@@ -50,7 +51,8 @@ exports.shiftinstance_create_get = function(req, res, next) {
                             .sort('-rank number')
                             .exec(function(err, results) {
                                 if (err) {
-                                    return next(err); }
+                                    return next(err);
+                                }
                                 callback(null, results)
                             });
 
@@ -122,22 +124,30 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                             });
 
                                     },
-                                    function(counts, callback) {
-                                        var flyer_array = [];
-                                        for (var i = 0; i < firefighter_listing.length; i++) {
-                                            flyer_array.push(firefighter_listing[i]);
-                                        }
-                                        //find names with previous shift instance and move to end of list
-                                        for (var i = 0; i < counts.length; i++) {
-                                            for (var j = 0; j < flyer_array.length; j++) {
-                                                if (flyer_array[j].name == counts[i]._id.name) {
-                                                    flyer_array.push(flyer_array.splice(j, 1)[0]);
+                                    function(callback) {
+                                        var flyer_array = []
+                                        async.mapValues(firefighter_listing, function (callback) {
+                                            flyer_array.push
+                                        }{
+
+                                            function(counts, callback) {
+                                                var flyer_array = [];
+                                                for (var i = 0; i < firefighter_listing.length; i++) {
+                                                    flyer_array.push(firefighter_listing[i]);
                                                 }
+                                                //find names with previous shift instance and move to end of list
+                                                for (var i = 0; i < counts.length; i++) {
+                                                    for (var j = 0; j < flyer_array.length; j++) {
+                                                        if (flyer_array[j].name == counts[i]._id.name) {
+                                                            flyer_array.push(flyer_array.splice(j, 1)[0]);
+                                                        }
+
+                                                    }
+                                                }
+                                                callback(null, flyer_array);
 
                                             }
-                                        }
-                                        callback(null, flyer_array);
-
+                                        })
                                     }
                                 ],
                                 function(err, newResult) {
