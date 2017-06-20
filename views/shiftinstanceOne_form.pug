@@ -3,18 +3,12 @@ extends layout
 block content
 	h1= title
 	
-	each firefighter in back_list
-		p #{firefighter.firefighter}
-	
-	p
-		!= driver_object.firefighter
-
 	form(method='POST' action='')
 		.form-group
-			label(for='driver') Driver: #{driver_object.fulltitle}
-			select#driver.form-control(type='select', placeholder='Select FireFighter' name='driver' required='true')
+			label(for='firefighter') #{current_shiftinstance.date_formatted} #{current_shiftinstance.pump.name}
+			select.form-control(type='select', placeholder='Select FireFighter' name='firefighter' required='true')
 				each val in firefighter_list
-					option(value=val selected=(val == driver_object.firefighter ? 'selected' : false)) #{val}
+					option(value=val._id id=val._id selected=(val.toString() == current_shiftinstance.firefighter ? 'selected' : false)) #{val.fulltitle}
 					
 		button.btn.btn-primary(type='submit') Submit
 

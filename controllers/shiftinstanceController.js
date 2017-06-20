@@ -813,8 +813,7 @@ exports.shiftinstance_create_post = function(req, res, next) {
                         });
                     });
                 return;
-            }
-            else {
+            } else {
                 //Data from form is valid
                 async.each(shiftinstance_array, function(shiftinstance, callback) {
                     shiftinstance.save();
@@ -858,79 +857,61 @@ exports.shiftinstance_update_get = function(req, res, next) {
         firefighter_list: function(callback) {
             FireFighter.find(callback);
         },
-        shift_list: function(callback) {
-            async.waterfall([
-                function(callback) {
-                    ShiftInstance.findById(req.params.id)
-                        .populate('firefighter')
-                        .populate('pump')
-                        .exec(function(err, fullshift) {
-                            if (err) {
-                                return next(err);
-                            }
-                            //console.log(fullshift)
-                            callback(null, fullshift);
-                        });
-                },
-                function(fullshift, callback) {
-                    ShiftInstance.find({})
-                        .where({
-                            'pump': fullshift.pump._id
-                        })
-                        .where({
-                            'date': fullshift.date
-                        })
-                        .where({
-                            'shift': fullshift.shift
-                        })
-                        .populate('firefighter')
-                        .exec(function(err, shift_list) {
-                            if (err) {
-                                return next(err);
-                            }
-                            console.log("Second waterfall");
-                            callback(null, shift_list);
-                        });
-                }
-            ], function(err, shift_list) {
-                if (err) {
-                    return next(err);
-                }
-                console.log('waterfall callback');
-                callback(null, shift_list);
-            });
+        current_shiftinstance: function(callback) {
+            ShiftInstance.findById(req.params.id)
+                .populate('firefighter')
+                .populate('pump')
+                .exec(callback);
         }
-
     }, function(err, results) {
         if (err) {
-            console.log('error');
             return next(err);
         }
-        console.log('parallel callback');
-        var driver;
-        var firefighters = [];
-        
-        async.each(results.shift_list, function (firefighter, callback) {
-            if (firefighter.md == true){
-                driver = firefighter;
-            }
-            else{
-                firefighters.push(firefighter)
-            }
-            callback();
-        })
-
         res.render('shiftinstanceOne_form', {
-            title: 'Update ShiftInstance',
+            title: 'Change fire fighter',
             firefighter_list: results.firefighter_list,
-            driver_object: driver,
-            back_list: firefighters
-        });
-
+            current_shiftinstance: results.current_shiftinstance
+        })
     });
 };
 
 // Handle shiftinstance update on POST
-exports.shiftinstance_update_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: ShifTinstance update POST');
+exports.shiftinstance_update_post = function(req, res, next) {
+    req.sanitize('id').escape();
+    req.sanitize('id').trim();
+
+    req.checkBody('firefighter', 'firefighter must not be empty').notEmpty();
+    req.sanitize('firefighter').escape();
+    req.sanitize('firefighter').trim();
+
+    console.log(req.body.firefighter)
+
+
+
+
+    var errors = req.validationErrors();
+    if (errors) {
+        //rerender ff with error info
+        //get all quals for form
+        FireFighter.find({})
+            .exec(function(err, firefighter_list) {
+                if (err) {
+                    return next(err);
+                }
+
+                res.render('shiftinstanceOne_form', { title: 'Change fire fighter', current_shiftinstance: current_shiftinstance, firefighter_list: firefighter_list, errors: errors });
+            });
+    } else {
+        
+        //data from form is valid. update record
+        ShiftInstance.findByIdAndUpdate(req.params.id, {firefighter: req.body.firefighter}, {}, function(err, theshiftinstance) {
+            if (err) {
+                return next(err);
+            }
+            //successfull -redirect to firefighter detail
+            res.redirect(theshiftinstance.url);
+        });
+    }
+
+
 };
