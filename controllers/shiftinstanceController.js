@@ -34,556 +34,133 @@ exports.shiftinstance_create_get = function(req, res, next) {
     var appliance_listing;
     var firefighter_listing;
     async.series({
-            lists: function(callback) {
-                async.parallel({
-                    appliance_list: function(callback) {
-                        Appliance.find({})
-                            .populate('qualifications')
-                            .exec(function(err, results) {
-                                if (err) {
-                                    return next(err);
-                                }
-                                callback(null, results)
-                            });
-                    },
-                    firefighter_list: function(callback) {
-                        FireFighter.find({})
-                            .populate('qualifications')
-                            .sort('-rank number')
-                            .exec(function(err, results) {
-                                if (err) {
-                                    return next(err);
-                                }
-                                callback(null, results)
-                            });
+        lists: function(callback) {
+            async.parallel({
+                appliance_list: function(callback) {
+                    Appliance.find({})
+                        .populate('qualifications')
+                        .exec(function(err, results) {
+                            if (err) {
+                                return next(err);
+                            }
+                            console.log('parallel-appliancelist');
+                            callback(null, results);
+                        });
+                },
+                firefighter_list: function(callback) {
+                    FireFighter.find({})
+                        .populate('qualifications')
+                        .sort('-rank number')
+                        .exec(function(err, results) {
+                            if (err) {
+                                return next(err);
+                            }
+                            console.log('parallel-firefighterlist');
+                            callback(null, results);
+                        });
 
-                    }
-                }, function(err, list_parallel) {
+                }
+            }, function(err, list_parallel) {
+                if (err) {
+                    return next(err);
+                }
+                appliance_listing = list_parallel.appliance_list;
+                firefighter_listing = list_parallel.firefighter_list;
+                console.log('series-lists');
+                callback(null, list_parallel);
+            });
+        },
+
+        rankings: function(callback) {
+            var appliance_array = [];
+            async.series([
+                function(callback) {
+                    Appliance.find({}, 'name')
+                        .exec(function(err, appliance_names) {
+                            if (err) {
+                                return next(err);
+                            }
+                            appliance_array = appliance_names;
+                            console.log('rankings-series-appliancefind');
+                            callback();
+                        });
+                },
+                function(callback) {
+                    async.map(appliance_array, function(appliance, callback) {
+                        var rankings = firefighter_listing;
+                        ShiftInstance.aggregate([{
+                                $match: {
+                                    pump: appliance._id
+                                }
+                            }, {
+                                $group: {
+                                    _id: '$firefighter',
+                                    count: {
+                                        $sum: 1
+                                    }
+                                }
+                            }, {
+                                $sort: {
+                                    count: 1
+                                }
+                            }
+
+                        ], function(err, counts) {
+                            if (err) {
+                                return next(err);
+                            }
+                            FireFighter.populate(counts, { path: '_id' }, function(err, counts) {
+                                if (err) {
+                                    return next(err);
+                                }
+                                async.eachOf(rankings, function(list_firefighter, key, callback) {
+                                    async.each(counts, function(count_firefighter, callback) {
+                                        //var times = 1;
+                                        if (list_firefighter == count_firefighter) {
+                                            rankings.push(rankings.splice(key, 1)[0]);
+                                        }
+                                        //console.log('each-inner' + times);
+                                        //times++;
+                                        callback();
+                                    });
+                                    console.log('each-outer' + key);
+                                    callback();
+                                });
+                            });
+                            console.log('aggregate end');
+                            callback();
+                        });
+
+
+                    }, function(err, mapResults) {
+                        if (err) {
+                            return next(err);
+                        }
+                        console.log('map end');
+                        callback(mapResults);
+                    });
+                },
+                function(err, mapResults) {
                     if (err) {
                         return next(err);
                     }
-                    appliance_listing = list_parallel.appliance_list;
-                    firefighter_listing = list_parallel.firefighter_list;
-                    callback(null, list_parallel);
-                });
-            },
-
-            rankings: function(callback) {
-                async.parallel({
-                        flyer_rankings: function(callback) {
-                            async.waterfall([
-                                    function(callback) {
-                                        Appliance.findOne({ name: 'flyer' })
-                                            .exec(function(err, pump) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                callback(null, pump);
-                                            });
-                                        // ShiftInstance.findByName('flyer', function(err, pump) {
-                                        //     if (err) {
-                                        //         res.send(err);
-                                        //     }
-
-                                        //     callback(null, pump);
-                                        // });
-                                    },
-                                    function(pump, callback) {
-
-                                        ShiftInstance.aggregate([{
-                                                    $match: {
-                                                        pump: pump._id
-                                                    }
-                                                }, {
-                                                    $group: {
-                                                        _id: '$firefighter',
-                                                        count: {
-                                                            $sum: 1
-                                                        }
-                                                    }
-                                                }, {
-                                                    $sort: {
-                                                        count: 1
-                                                    }
-                                                }
-
-
-                                            ],
-                                            function(err, counts) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                FireFighter.populate(counts, {
-                                                    path: '_id'
-                                                }, function(err, counts) {
-                                                    if (err) {
-                                                        return next(err);
-                                                    }
-
-                                                    callback(null, counts);
-                                                });
-                                            });
-
-                                    },
-                                    function(counts, callback) {
-                                        var flyer_array = [];
-                                        for (var i = 0; i < firefighter_listing.length; i++) {
-                                            flyer_array.push(firefighter_listing[i]);
-                                        }
-                                        //find names with previous shift instance and move to end of list
-                                        for (var i = 0; i < counts.length; i++) {
-                                            for (var j = 0; j < flyer_array.length; j++) {
-                                                if (flyer_array[j].name == counts[i]._id.name) {
-                                                    flyer_array.push(flyer_array.splice(j, 1)[0]);
-                                                }
-
-                                            }
-                                        }
-                                        callback(null, flyer_array);
-
-                                    }
-                                ],
-                                function(err, newResult) {
-                                    if (err) {
-                                        return next(err);
-                                    } else {
-
-                                        callback(null, newResult);
-                                    }
-                                });
-                        },
-                        runner_rankings: function(callback) {
-                            async.waterfall([
-                                    function(callback) {
-                                        Appliance.findOne({ name: 'runner' })
-                                            .exec(function(err, pump) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                callback(null, pump);
-                                            });
-                                        // ShiftInstance.findByName('runner', function(err, pump) {
-                                        //     if (err) {
-                                        //         res.send(err);
-                                        //     }
-
-                                        //     callback(null, pump);
-                                        // });
-                                    },
-                                    function(pump, callback) {
-
-                                        ShiftInstance.aggregate([{
-                                                    $match: {
-                                                        pump: pump._id
-                                                    }
-                                                }, {
-                                                    $group: {
-                                                        _id: '$firefighter',
-                                                        count: {
-                                                            $sum: 1
-                                                        }
-                                                    }
-                                                }, {
-                                                    $sort: {
-                                                        count: 1
-                                                    }
-                                                }
-
-
-                                            ],
-                                            function(err, counts) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                FireFighter.populate(counts, {
-                                                    path: '_id'
-                                                }, function(err, counts) {
-                                                    if (err) {
-                                                        return next(err);
-                                                    }
-
-                                                    callback(null, counts);
-                                                });
-                                            });
-
-                                    },
-                                    function(counts, callback) {
-                                        var runner_array = [];
-                                        for (var i = 0; i < firefighter_listing.length; i++) {
-                                            runner_array.push(firefighter_listing[i]);
-                                        }
-                                        //find names with previous shift instance and move to end of list
-                                        for (var i = 0; i < counts.length; i++) {
-                                            for (var j = 0; j < runner_array.length; j++) {
-                                                if (runner_array[j].name == counts[i]._id.name) {
-                                                    runner_array.push(runner_array.splice(j, 1)[0]);
-                                                }
-
-                                            }
-                                        }
-                                        callback(null, runner_array);
-
-                                    }
-                                ],
-                                function(err, newResult) {
-                                    if (err) {
-                                        return next(err);
-                                    } else {
-
-                                        callback(null, newResult);
-                                    }
-                                });
-                        },
-                        rescue_pump_rankings: function(callback) {
-                            async.waterfall([
-                                    function(callback) {
-                                        Appliance.findOne({ name: 'rescuepump' })
-                                            .exec(function(err, pump) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                callback(null, pump);
-                                            });
-                                        // ShiftInstance.findByName('rescuepump', function(err, pump) {
-                                        //     if (err) {
-                                        //         res.send(err);
-                                        //     }
-
-                                        //     callback(null, pump);
-                                        // });
-                                    },
-                                    function(pump, callback) {
-
-                                        ShiftInstance.aggregate([{
-                                                    $match: {
-                                                        pump: pump._id
-                                                    }
-                                                }, {
-                                                    $group: {
-                                                        _id: '$firefighter',
-                                                        count: {
-                                                            $sum: 1
-                                                        }
-                                                    }
-                                                }, {
-                                                    $sort: {
-                                                        count: 1
-                                                    }
-                                                }
-
-
-                                            ],
-                                            function(err, counts) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                FireFighter.populate(counts, {
-                                                    path: '_id'
-                                                }, function(err, counts) {
-                                                    if (err) {
-                                                        return next(err);
-                                                    }
-
-                                                    callback(null, counts);
-                                                });
-                                            });
-
-                                    },
-                                    function(counts, callback) {
-                                        var rescuepump_array = [];
-                                        for (var i = 0; i < firefighter_listing.length; i++) {
-                                            rescuepump_array.push(firefighter_listing[i]);
-                                        }
-                                        //find names with previous shift instance and move to end of list
-                                        for (var i = 0; i < counts.length; i++) {
-                                            for (var j = 0; j < rescuepump_array.length; j++) {
-                                                if (rescuepump_array[j].name == counts[i]._id.name) {
-                                                    rescuepump_array.push(rescuepump_array.splice(j, 1)[0]);
-                                                }
-
-                                            }
-                                        }
-                                        callback(null, rescuepump_array);
-
-                                    }
-                                ],
-                                function(err, newResult) {
-                                    if (err) {
-                                        return next(err);
-                                    } else {
-
-                                        callback(null, newResult);
-                                    }
-                                });
-                        },
-                        salvage_rankings: function(callback) {
-                            async.waterfall([
-                                    function(callback) {
-                                        Appliance.findOne({ name: 'salvage' })
-                                            .exec(function(err, pump) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                callback(null, pump);
-                                            });
-                                        // ShiftInstance.findByName('salvage', function(err, pump) {
-                                        //     if (err) {
-                                        //         res.send(err);
-                                        //     }
-
-                                        //     callback(null, pump);
-                                        // });
-                                    },
-                                    function(pump, callback) {
-
-                                        ShiftInstance.aggregate([{
-                                                    $match: {
-                                                        pump: pump._id
-                                                    }
-                                                }, {
-                                                    $group: {
-                                                        _id: '$firefighter',
-                                                        count: {
-                                                            $sum: 1
-                                                        }
-                                                    }
-                                                }, {
-                                                    $sort: {
-                                                        count: 1
-                                                    }
-                                                }
-
-
-                                            ],
-                                            function(err, counts) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                FireFighter.populate(counts, {
-                                                    path: '_id'
-                                                }, function(err, counts) {
-                                                    if (err) {
-                                                        return next(err);
-                                                    }
-
-                                                    callback(null, counts);
-                                                });
-                                            });
-
-                                    },
-                                    function(counts, callback) {
-                                        var salvage_array = [];
-                                        for (var i = 0; i < firefighter_listing.length; i++) {
-                                            salvage_array.push(firefighter_listing[i]);
-                                        }
-                                        //find names with previous shift instance and move to end of list
-                                        for (var i = 0; i < counts.length; i++) {
-                                            for (var j = 0; j < salvage_array.length; j++) {
-                                                if (salvage_array[j].name == counts[i]._id.name) {
-                                                    salvage_array.push(salvage_array.splice(j, 1)[0]);
-                                                }
-
-                                            }
-                                        }
-                                        callback(null, salvage_array);
-
-                                    }
-                                ],
-                                function(err, newResult) {
-                                    if (err) {
-                                        return next(err);
-                                    } else {
-
-                                        callback(null, newResult);
-                                    }
-                                });
-                        },
-                        bronto_rankings: function(callback) {
-                            async.waterfall([
-                                    function(callback) {
-                                        Appliance.findOne({ name: 'bronto' })
-                                            .exec(function(err, pump) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                callback(null, pump);
-                                            });
-                                        // ShiftInstance.findByName('bronto', function(err, pump) {
-                                        //     if (err) {
-                                        //         res.send(err);
-                                        //     }
-
-                                        //     callback(null, pump);
-                                        // });
-                                    },
-                                    function(pump, callback) {
-
-                                        ShiftInstance.aggregate([{
-                                                    $match: {
-                                                        pump: pump._id
-                                                    }
-                                                }, {
-                                                    $group: {
-                                                        _id: '$firefighter',
-                                                        count: {
-                                                            $sum: 1
-                                                        }
-                                                    }
-                                                }, {
-                                                    $sort: {
-                                                        count: 1
-                                                    }
-                                                }
-
-
-                                            ],
-                                            function(err, counts) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                FireFighter.populate(counts, {
-                                                    path: '_id'
-                                                }, function(err, counts) {
-                                                    if (err) {
-                                                        return next(err);
-                                                    }
-
-                                                    callback(null, counts);
-                                                });
-                                            });
-
-                                    },
-                                    function(counts, callback) {
-                                        var bronto_array = [];
-                                        for (var i = 0; i < firefighter_listing.length; i++) {
-                                            bronto_array.push(firefighter_listing[i]);
-                                        }
-                                        //find names with previous shift instance and move to end of list
-                                        for (var i = 0; i < counts.length; i++) {
-                                            for (var j = 0; j < bronto_array.length; j++) {
-                                                if (bronto_array[j].name == counts[i]._id.name) {
-                                                    bronto_array.push(bronto_array.splice(j, 1)[0]);
-                                                }
-
-                                            }
-                                        }
-                                        callback(null, bronto_array);
-
-                                    }
-                                ],
-                                function(err, newResult) {
-                                    if (err) {
-                                        return next(err);
-                                    } else {
-
-                                        callback(null, newResult);
-                                    }
-                                });
-                        },
-                        md_rankings: function(callback) {
-                            async.waterfall([
-                                    function(callback) {
-                                        Appliance.findOne({ name: 'md' })
-                                            .exec(function(err, pump) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                callback(null, pump);
-                                            });
-                                        // ShiftInstance.findByName('md', function(err, pump) {
-                                        //     if (err) {
-                                        //         res.send(err);
-                                        //     }
-
-                                        //     callback(null, pump);
-                                        // });
-                                    },
-                                    function(pump, callback) {
-
-                                        ShiftInstance.aggregate([{
-                                                $match: {
-                                                    md: true
-                                                }
-                                            }, {
-                                                $group: {
-                                                    _id: '$firefighter',
-                                                    count: {
-                                                        $sum: 1
-                                                    }
-                                                }
-                                            }, {
-                                                $sort: {
-                                                    count: 1
-                                                }
-                                            }
-
-                                        ], function(err, counts) {
-                                            if (err) {
-                                                return next(err);
-                                            }
-                                            FireFighter.populate(counts, {
-                                                path: '_id'
-                                            }, function(err, counts) {
-
-                                                if (err) {
-                                                    return next(err);
-                                                }
-
-                                                callback(null, counts);
-                                            });
-                                        });
-
-                                    },
-                                    function(counts, callback) {
-                                        var md_array = [];
-                                        for (var i = 0; i < firefighter_listing.length; i++) {
-                                            md_array.push(firefighter_listing[i]);
-                                        }
-                                        //find names with previous shift instance and move to end of list
-                                        for (var i = 0; i < counts.length; i++) {
-                                            for (var j = 0; j < md_array.length; j++) {
-                                                if (md_array[j].name == counts[i]._id.name) {
-                                                    md_array.push(md_array.splice(j, 1)[0]);
-                                                }
-
-                                            }
-                                        }
-                                        callback(null, md_array);
-
-                                    }
-                                ],
-                                function(err, newResult) {
-                                    if (err) {
-                                        return next(err);
-                                    } else {
-
-                                        callback(null, newResult);
-                                    }
-                                })
-                        }
-                    },
-                    function(err, rankings_parallel) {
-
-                        callback(null, rankings_parallel);
-                    })
-            }
-        },
-        function(err, results) {
-            if (err) {
-                return next(err);
-            }
-            console.log(results);
-            res.render('shiftinstance_form', {
-                title: 'Shift create form',
-                appliance_list: results.lists.appliance_list,
-                flyer_list: results.rankings.flyer_rankings,
-                runner_list: results.rankings.runner_rankings,
-                rescue_pump_list: results.rankings.rescue_pump_rankings,
-                salvage_list: results.rankings.salvage_rankings,
-                bronto_list: results.rankings.bronto_rankings,
-                md_list: results.rankings.md_rankings
-            });
+                    console.log('map function end');
+                    callback(null, mapResults);
+                }
+            ]);
+        }
+    }, function(err, results) {
+        if (err) {
+            return next(err);
+        }
+        console.log('final callback');
+        res.render('shiftinstance_form', {
+            title: 'Shift create form',
+            appliance_list: results.lists.appliance_list,
+            ranking_lists: results.rankings,
+            md_list: results.rankings.lists.firefighter_list
         });
+    });
 
 };
 // Handle ShiftInstance create on POST

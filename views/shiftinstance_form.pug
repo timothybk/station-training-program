@@ -15,7 +15,7 @@ block content
 				option(value='day') Day Shift
 				option(value='night') Night Shift
 
-		each appliance in appliance_list
+		each appliance, key in appliance_list
 			hr
 			each seat in appliance.seats
 				.form-group
@@ -28,83 +28,16 @@ block content
 										if (val.name == 'md' && firefighter.rank != 'Station Officer')
 											option(value=firefighter._id) #{firefighter.fulltitle}
 							else if (appliance.qualifications.length > 0)
-								each firefighter in flyer_list
+								each firefighter in ranking_lists[key]
 									if (firefighter.rank != 'Station Officer')
 										each val in firefighter.qualifications
 											if (val.name == appliance.qualifications[0].name)
 												option(value=firefighter._id) #{firefighter.fulltitle}
 							else
-								each firefighter in flyer_list
+								each firefighter in ranking_lists[key]
 									if (firefighter.rank != 'Station Officer')
 										option(value=firefighter._id) #{firefighter.fulltitle}
-						if appliance.name == 'runner'
-							if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
-								each firefighter in md_list
-									each val in firefighter.qualifications
-										if (val.name == 'md' && firefighter.rank != 'Station Officer')
-											option(value=firefighter._id) #{firefighter.fulltitle}
-							else if (appliance.qualifications.length > 0)
-								each firefighter in runner_list
-									if (firefighter.rank != 'Station Officer')
-										each val in firefighter.qualifications
-											if (val.name == appliance.qualifications[0].name)
-												option(value=firefighter._id) #{firefighter.fulltitle}
-							else
-								each firefighter in runner_list
-									if (firefighter.rank != 'Station Officer')
-										option(value=firefighter._id) #{firefighter.fulltitle}
-						if appliance.name == 'rescuepump'
-							if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
-								each firefighter in md_list
-									each val in firefighter.qualifications
-										if (val.name == 'md' && firefighter.rank != 'Station Officer')
-											option(value=firefighter._id) #{firefighter.fulltitle}
-							else if (seat == 'three')
-								each firefighter in rescue_pump_list
-									if (firefighter.rank != 'Station Officer')
-										option(value=firefighter._id) #{firefighter.fulltitle}
-							else if (appliance.qualifications.length > 0)
-								each firefighter in rescue_pump_list
-									if (firefighter.rank != 'Station Officer')
-										each val in firefighter.qualifications
-											if (val.name == appliance.qualifications[0].name)
-												option(value=firefighter._id) #{firefighter.fulltitle}
-							else
-								each firefighter in rescue_pump_list
-									if (firefighter.rank != 'Station Officer')
-										option(value=firefighter._id) #{firefighter.fulltitle}
-						if appliance.name == 'salvage'
-							if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
-								each firefighter in md_list
-									each val in firefighter.qualifications
-										if (val.name == 'md' && firefighter.rank != 'Station Officer')
-											option(value=firefighter._id) #{firefighter.fulltitle}
-							else if (appliance.qualifications.length > 0)
-								each firefighter in salvage_list
-									if (firefighter.rank != 'Station Officer')
-										each val in firefighter.qualifications
-											if (val.name == appliance.qualifications[0].name)
-												option(value=firefighter._id) #{firefighter.fulltitle}
-							else
-								each firefighter in salvage_list
-									if (firefighter.rank != 'Station Officer')
-										option(value=firefighter._id) #{firefighter.fulltitle}
-						if appliance.name == 'bronto'
-							if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
-								each firefighter in md_list
-									each val in firefighter.qualifications
-										if (val.name == 'md' && firefighter.rank != 'Station Officer')
-											option(value=firefighter._id) #{firefighter.fulltitle}
-							else if (appliance.qualifications.length > 0)
-								each firefighter in bronto_list
-									if (firefighter.rank != 'Station Officer')
-										each val in firefighter.qualifications
-											if (val.name == appliance.qualifications[0].name)
-												option(value=firefighter._id) #{firefighter.fulltitle}
-							else
-								each firefighter in bronto_list
-									if (firefighter.rank != 'Station Officer')
-										option(value=firefighter._id) #{firefighter.fulltitle}
+						
 
 
 		button.btn.btn-primary(type='submit') Submit

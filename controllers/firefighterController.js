@@ -57,6 +57,7 @@ exports.firefighter_detail = function(req, res, next) {
         shiftinstance_list: function (callback) {
             ShiftInstance.find({'firefighter': req.params.id})
             .populate('pump')
+            .sort('-date')
             .exec(callback);
         },
     }, function(err, results) {
