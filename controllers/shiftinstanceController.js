@@ -135,7 +135,7 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                             callback();
                                         }, function(err) {
                                             if (err) {
-                                                console.log('en each step fucked it')
+                                                console.log('an each step fucked it')
                                                 return next(err);
                                             }
 
