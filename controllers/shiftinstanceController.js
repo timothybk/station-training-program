@@ -31,158 +31,159 @@ exports.shiftinstance_detail = function(req, res, next) {
 //Display ShiftInstance create form on GET
 
 exports.shiftinstance_create_get = function(req, res, next) {
-    var appliance_listing;
     var firefighter_listing;
     async.series({
-        lists: function(callback_lists) {
-            async.parallel({
-                appliance_list: function(callbackp1) {
-                    Appliance.find({})
-                        .populate('qualifications')
-                        .exec(function(err, results) {
-                            if (err) {
-                                return next(err);
-                            }
-                            console.log('parallel-appliancelist');
-                            callbackp1(null, results);
-                        });
-                },
-                firefighter_list: function(callbackp2) {
-                    FireFighter.find({})
-                        .populate('qualifications')
-                        .sort('-rank number')
-                        .exec(function(err, results) {
-                            if (err) {
-                                return next(err);
-                            }
-                            console.log('parallel-firefighterlist');
-                            callbackp2(null, results);
-                        });
+            lists: function(callback) {
+                async.parallel({
+                    appliance_list: function(callback) {
+                        Appliance.find({})
+                            .populate('qualifications')
+                            .exec(function(err, results) {
+                                if (err) {
+                                    return next(err);
+                                }
+                                console.log('parallel-appliancelist');
+                                callback(null, results);
+                            });
+                    },
+                    firefighter_list: function(callback) {
+                        FireFighter.find({})
+                            .populate('qualifications')
+                            .sort('-rank number')
+                            .exec(function(err, results) {
+                                if (err) {
+                                    return next(err);
+                                }
+                                console.log('parallel-firefighterlist');
+                                callback(null, results);
+                            });
+                    }
+                }, function(err, list_parallel) {
+                    if (err) {
+                        return next(err);
+                    }
+                    firefighter_listing = list_parallel.firefighter_list;
+                    console.log('series-lists');
+                    callback(null, list_parallel);
+                });
+            },
 
-                }
-            }, function(err, list_parallel) {
-                if (err) {
-                    return next(err);
-                }
-                appliance_listing = list_parallel.appliance_list;
-                firefighter_listing = list_parallel.firefighter_list;
-                console.log('series-lists');
-                callback_lists(null, list_parallel);
-            });
-        },
-
-        rankings: function(callback_rankings) {
-            var appliance_array = [];
-            var rankings;
-            async.series([
-                function(callbacks1) {
-                    Appliance.find({}, 'name')
-                        .exec(function(err, appliance_names) {
-                            if (err) {
-                                return next(err);
-                            }
-                            appliance_array = appliance_names;
-                            console.log('rankings-series-appliancefind');
-                            callbacks1();
-                        });
-                },
-                function(callbacks2) {
-                    async.map(appliance_array, function(appliance, callbackMap) {
-                        async.waterfall([
-                            function(callbackw1) {
-                                ShiftInstance.aggregate([{
-                                        $match: {
-                                            pump: appliance._id
-                                        }
-                                    }, {
-                                        $group: {
-                                            _id: '$firefighter',
-                                            count: {
-                                                $sum: 1
+            rankings: function(callback) {
+                async.waterfall([
+                    function(callback) {
+                        Appliance.find({}, 'name')
+                            .exec(function(err, appliance_names) {
+                                if (err) {
+                                    return next(err);
+                                }
+                                console.log('rankings-series-appliancefind');
+                                callback(null, appliance_names);
+                            });
+                    },
+                    function(appliance_names, callback) {
+                        async.map(
+                            appliance_names,
+                            function(appliance, callback) {
+                                async.waterfall([
+                                    function(callback) {
+                                        ShiftInstance.aggregate([{
+                                                $match: {
+                                                    pump: appliance._id
+                                                }
+                                            }, {
+                                                $group: {
+                                                    _id: '$firefighter',
+                                                    count: {
+                                                        $sum: 1
+                                                    }
+                                                }
+                                            }, {
+                                                $sort: {
+                                                    count: 1
+                                                }
                                             }
-                                        }
-                                    }, {
-                                        $sort: {
-                                            count: 1
-                                        }
-                                    }
 
-                                ], function(err, counts) {
+                                        ], function(err, counts) {
+                                            if (err) {
+                                                return next(err);
+                                            }
+                                            FireFighter.populate(counts, {
+                                                path: '_id'
+                                            }, function(err, counts) {
+                                                if (err) {
+                                                    return next(err);
+                                                }
+                                                console.log('aggregate function completed successfully');
+                                                callback(null, counts);
+                                            })
+                                        })
+                                    },
+                                    function(counts, callback) {
+                                        var list_of_firefighters = firefighter_listing;
+                                        async.each(counts, function(ranked_firefighter, callback) {
+                                            async.eachOf(list_of_firefighters, function(list_firefighter, key, callback) {
+                                                if (list_firefighter.name == ranked_firefighter._id.name) {
+                                                    list_of_firefighters.push(list_of_firefighters.splice(key, 1)[0]);
+                                                }
+                                                callback();
+                                            }, function(err) {
+                                                if (err) {
+                                                    console.log('an eachOf step fucked it')
+                                                    return next(err);
+                                                }
+                                            })
+                                            callback();
+                                        }, function(err) {
+                                            if (err) {
+                                                console.log('en each step fucked it')
+                                                return next(err);
+                                            }
+
+                                        })
+                                        console.log('function containing each/eachOf completed')
+                                        callback(null, list_of_firefighters)
+                                    }
+                                ], function(err, waterfallResult) {
                                     if (err) {
+                                        console.log('waterfall fucked up')
                                         return next(err);
                                     }
-                                    FireFighter.populate(counts, {
-                                        path: '_id'
-                                    }, function(err, counts) {
-                                        if (err) {
-                                            return next(err);
-                                        }
-                                        console.log('aggregate');
-                                        callbackw1(null, counts);
-                                    })
-                                })
+                                    console.log('waterfall completed successfully')
+                                    callback(null, waterfallResult);
+                                });
                             },
-                            function(counts, callbackw2) {
-                                var list_of_firefighters = firefighter_listing;
-                                async.each(counts, function(ranked_firefighter, callbacke1) {
-                                    async.eachOf(list_of_firefighters, function(list_firefighter, key, callbacke2) {
-                                        if (list_firefighter.name == ranked_firefighter._id.name) {
-                                            list_of_firefighters.push(list_of_firefighters.splice(key, 1)[0]);
-                                            callbacke2();
-                                        }
-                                        else {
-                                            callbacke2();
-                                        }
-                                    }, function(err) {
-                                        if (err) {
-                                            return next(err);
-                                        }
-                                        console.log('inside each')
-                                        callbacke1(list_of_firefighters);
-                                    })
-                                })
-                                callbackw2(null, list_of_firefighters)
-                            }
-                        ], function(err, waterfallResults) {
-                            if (err) {
-                                return next(err);
-                            }
-                            console.log('waterfallResults')
-                            callbackMap(waterfallResults);
-                        });
-                    }, function(err, mapResults) {
-                        if (err) {
-                            return next(err);
-                        }
-                        console.log('mapResults')
-                        callbacks2(mapResults);
-                    });
-                }
-            ], function(err, middleSeriesResults) {
-                if (err) {
-                    return next(err);
-                }
-                console.log('mapResults')
-                callback_rankings(middleSeriesResults);
-            })
+                            function(err, mapResults) {
+                                if (err) {
+                                    console.log('map fucked up')
+                                    return next(err);
+                                }
+                                console.log('map completed successfully')
+                                callback(null, mapResults);
+                            });
+                    }
+                ], function(err, middleSeriesResults) {
+                    if (err) {
+                        return next(err);
+                    }
+                    console.log('ranking series completed successfully')
+                    callback(null, middleSeriesResults);
+                })
+            }
         },
         function(err, results) {
             if (err) {
                 return next(err);
             }
             console.log('final callback');
+            //console.log(results.rankings[2][2]);
             res.render('shiftinstance_form', {
                 title: 'Shift create form',
                 appliance_list: results.lists.appliance_list,
                 ranking_lists: results.rankings,
-                md_list: results.rankings.lists.firefighter_list
+                md_list: results.lists.firefighter_list
             });
         }
-
-
-
-    });
-
+    );
 };
 // Handle ShiftInstance create on POST
 exports.shiftinstance_create_post = function(req, res, next) {
