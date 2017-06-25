@@ -27,16 +27,16 @@ ShiftInstanceSchema
 });
 
 //static for find one shift instance
-// ShiftInstanceSchema.statics.findByName = function (pumpname, callback) {
-//   var query = this.findOne()
+ShiftInstanceSchema.statics.findByName = function (pumpname, callback) {
+  var query = this.findOne()
 
-//   Appliance.findOne({name: pumpname}, function (error, appliance) {
-//     query.where({pump: appliance._id})
-//     .exec(callback);
-//   })
+  Appliance.findOne({name: pumpname}, function (error, appliance) {
+    query.where({pump: appliance._id})
+    .exec(callback);
+  })
 
-//   return query
-// }
+  return query
+}
 
 //export model
 module.exports = mongoose.model('ShiftInstance', ShiftInstanceSchema);

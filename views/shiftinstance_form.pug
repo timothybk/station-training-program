@@ -15,12 +15,15 @@ block content
 				option(value='day') Day Shift
 				option(value='night') Night Shift
 
+
 		each appliance, index in appliance_list
+
 			hr
 			each seat in appliance.seats
 				.form-group
 					label(for=appliance.name + seat) #{appliance.name} #{seat}
 					select(id=appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=appliance.name + seat, required='true')
+
 						if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
 							each firefighter in md_list[index]
 								if (firefighter.rank != 'Station Officer')
@@ -32,10 +35,12 @@ block content
 										option(value=firefighter._id) #{firefighter.fulltitle}
 							else	
 								each firefighter in ranking_lists[index]
+
 									if (firefighter.rank != 'Station Officer')
 										each val in firefighter.qualifications
 											if (val.name == appliance.qualifications[0].name)
 												option(value=firefighter._id) #{firefighter.fulltitle}
+
 						else
 							each firefighter in ranking_lists[index]
 								if (firefighter.rank != 'Station Officer')

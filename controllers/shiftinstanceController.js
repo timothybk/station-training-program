@@ -29,7 +29,6 @@ exports.shiftinstance_detail = function(req, res, next) {
 };
 
 //Display ShiftInstance create form on GET
-
 exports.shiftinstance_create_get = function(req, res, next) {
     var firefighter_listing;
     var md_listing;
@@ -41,14 +40,17 @@ exports.shiftinstance_create_get = function(req, res, next) {
                             .populate('qualifications')
                             .exec(function(err, results) {
                                 if (err) {
+
                                     return next(err);
                                 }
                                 callback(null, results);
+
                             });
                     },
                     firefighter_list: function(callback) {
                         FireFighter.find({})
                             .populate('qualifications')
+
                             .exec(function(err, results) {
                                 if (err) {
                                     return next(err);
@@ -199,12 +201,14 @@ exports.shiftinstance_create_get = function(req, res, next) {
 
 
                 );
+
             }
         },
         function(err, results) {
             if (err) {
                 return next(err);
             }
+
             res.render('shiftinstance_form', {
                 title: 'Shift create form',
                 appliance_list: results.lists.appliance_list,
@@ -213,6 +217,7 @@ exports.shiftinstance_create_get = function(req, res, next) {
             });
         }
     );
+
 };
 // Handle ShiftInstance create on POST
 exports.shiftinstance_create_post = function(req, res, next) {
