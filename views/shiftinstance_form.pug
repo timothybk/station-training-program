@@ -27,11 +27,16 @@ block content
 									if (val.name == 'md' && firefighter.rank != 'Station Officer')
 										option(value=firefighter._id) #{firefighter.fulltitle}
 						else if (appliance.qualifications.length > 0)
-							each firefighter in ranking_lists[index]
-								if (firefighter.rank != 'Station Officer')
-									each val in firefighter.qualifications
-										if (val.name == appliance.qualifications[0].name)
-											option(value=firefighter._id) #{firefighter.fulltitle}
+							if (appliance.name == 'rescuepump' && seat == 'three')
+								each firefighter in ranking_lists[index]
+									if (firefighter.rank != 'Station Officer')
+										option(value=firefighter._id) #{firefighter.fulltitle}
+							else	
+								each firefighter in ranking_lists[index]
+									if (firefighter.rank != 'Station Officer')
+										each val in firefighter.qualifications
+											if (val.name == appliance.qualifications[0].name)
+												option(value=firefighter._id) #{firefighter.fulltitle}
 						else
 							each firefighter in ranking_lists[index]
 								if (firefighter.rank != 'Station Officer')
