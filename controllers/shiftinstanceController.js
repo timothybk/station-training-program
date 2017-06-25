@@ -43,45 +43,42 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                 if (err) {
                                     return next(err);
                                 }
-                                console.log('parallel-appliancelist');
                                 callback(null, results);
                             });
                     },
                     firefighter_list: function(callback) {
                         FireFighter.find({})
                             .populate('qualifications')
-                            .sort('-rank number')
                             .exec(function(err, results) {
                                 if (err) {
                                     return next(err);
                                 }
-                                console.log('parallel-firefighterlist');
                                 callback(null, results);
                             });
                     },
                     md_list: function(callback) {
-                        Qualification.find({ 'name': 'md' }, '_id')
+                        Qualification.find({ 'name': 'md' })
                             .exec(function(err, results) {
                                 if (err) {
                                     return next(err);
                                 }
                                 FireFighter.find({})
-                                //problem here
-                                    .where('qualifications').equals(results._id.toString())
+                                    .where('qualifications').in(results)
                                     .exec(function(err, results) {
                                         if (err) {
                                             return next(err);
                                         }
-                                        callback(null, results)
-                                    })
-                            })
+
+                                        callback(null, results);
+                                    });
+                            });
                     }
                 }, function(err, list_parallel) {
                     if (err) {
                         return next(err);
                     }
                     firefighter_listing = list_parallel.firefighter_list;
-                    console.log('series-lists');
+                    md_listing = list_parallel.md_list;
                     callback(null, list_parallel);
                 });
             },
@@ -95,7 +92,6 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                             if (err) {
                                                 return next(err);
                                             }
-                                            console.log('rankings-series-appliancefind');
                                             callback(null, appliance_names);
                                         });
                                 },
@@ -130,7 +126,6 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                             if (err) {
                                                 return next(err);
                                             }
-                                            console.log('map completed successfully')
                                             callback(null, mapResults);
                                         });
                                 }
@@ -138,9 +133,8 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                 if (err) {
                                     return next(err);
                                 }
-                                console.log('ranking waterfall completed successfully')
                                 callback(null, rankingsWaterfallResults);
-                            })
+                            });
 
                         },
                         md_list: function(callback) {
@@ -151,7 +145,6 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                             if (err) {
                                                 return next(err);
                                             }
-                                            console.log('rankings-series-appliancefind');
                                             callback(null, appliance_names);
                                         });
                                 },
@@ -186,7 +179,6 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                             if (err) {
                                                 return next(err);
                                             }
-                                            console.log('map completed successfully')
                                             callback(null, mapResults);
                                         });
                                 }
@@ -194,9 +186,8 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                 if (err) {
                                     return next(err);
                                 }
-                                console.log('ranking waterfall completed successfully')
                                 callback(null, rankingsWaterfallResults);
-                            })
+                            });
 
                         }
                     }, function(err, rankings_parallel) {
@@ -214,7 +205,6 @@ exports.shiftinstance_create_get = function(req, res, next) {
             if (err) {
                 return next(err);
             }
-            console.log('final callback');
             res.render('shiftinstance_form', {
                 title: 'Shift create form',
                 appliance_list: results.lists.appliance_list,

@@ -22,10 +22,9 @@ block content
 					label(for=appliance.name + seat) #{appliance.name} #{seat}
 					select(id=appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=appliance.name + seat, required='true')
 						if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
-							each firefighter in md_list
-								each val in firefighter.qualifications
-									if (val.name == 'md' && firefighter.rank != 'Station Officer')
-										option(value=firefighter._id) #{firefighter.fulltitle}
+							each firefighter in md_list[index]
+								if (firefighter.rank != 'Station Officer')
+									option(value=firefighter._id) #{firefighter.fulltitle}
 						else if (appliance.qualifications.length > 0)
 							if (appliance.name == 'rescuepump' && seat == 'three')
 								each firefighter in ranking_lists[index]
