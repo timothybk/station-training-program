@@ -20,7 +20,7 @@ FireFighterSchema
 FireFighterSchema
     .virtual('url')
     .get(function() {
-        return '/catalog/firefighter/' + this._id;
+        return '/firefighter/' + this._id;
     })
 
 module.exports = mongoose.model('FireFighter', FireFighterSchema);

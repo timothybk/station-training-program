@@ -9,7 +9,8 @@ block content
 			select.form-control(type='select', placeholder='Select FireFighter' name='firefighter' required='true')
 				each val in firefighter_list
 					option(value=val._id id=val._id selected=(val.toString() == current_shiftinstance.firefighter ? 'selected' : false)) #{val.fulltitle}
-					
+
+		input(type='hidden', name='_csrf', value=_csrf)		
 		button.btn.btn-primary(type='submit') Submit
 
 	if errors

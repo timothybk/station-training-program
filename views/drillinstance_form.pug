@@ -37,6 +37,7 @@ block content
 					else
 						option(value=firefighter._id) #{firefighter.fulltitle}
 
+		input(type='hidden', name='_csrf', value=_csrf)
 		button.btn.btn-primary(type='submit') Submit
 
 		if errors

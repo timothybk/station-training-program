@@ -16,7 +16,7 @@ DrillSchema
 DrillSchema
 .virtual('url')
 .get(function () {
-	return '/catalog/drill/' + this._id;
+	return '/drill/' + this._id;
 });
 
 module.exports = mongoose.model('Drill', DrillSchema);

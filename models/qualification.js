@@ -9,7 +9,7 @@ var QualificationSchema = Schema({
 QualificationSchema
     .virtual('url')
     .get(function() {
-        return '/catalog/qualification/' + this._id;
+        return '/qualification/' + this._id;
     });
 
 module.exports = mongoose.model('Qualification', QualificationSchema);

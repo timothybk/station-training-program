@@ -11,7 +11,7 @@ var ApplianceSchema = Schema({
 ApplianceSchema
 .virtual('url')
 .get(function () {
-    return '/catalog/appliance/' + this._id;
+    return '/appliance/' + this._id;
 });
 
 module.exports = mongoose.model('Appliance', ApplianceSchema);

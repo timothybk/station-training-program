@@ -14,7 +14,7 @@ var DrillInstanceSchema = Schema({
 DrillInstanceSchema
 .virtual('url')
 .get(function () {
-	return '/catalog/drillinstance/' + this._id;
+	return '/drillinstance/' + this._id;
 });
 
 //virtual for moment reformatting of date

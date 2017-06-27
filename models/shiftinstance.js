@@ -16,7 +16,7 @@ var ShiftInstanceSchema = Schema({
 ShiftInstanceSchema
 .virtual('url')
 .get(function () {
-	return '/catalog/shiftinstance/' + this._id;
+	return '/shiftinstance/' + this._id;
 });
 
 //virtual for moment reformatting of date

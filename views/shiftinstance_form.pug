@@ -45,6 +45,7 @@ block content
 							each firefighter in ranking_lists[index]
 								if (firefighter.rank != 'Station Officer')
 									option(value=firefighter._id) #{firefighter.fulltitle}
+		input(type='hidden', name='_csrf', value=_csrf)
 						
 
 		button.btn.btn-primary(type='submit') Submit
