@@ -169,6 +169,9 @@ app.post('/firefighter/:id/update', firefighter_controller.firefighter_update_po
 //GET request for one firefighter
 app.get('/firefighter/:id', firefighter_controller.firefighter_detail);
 
+//GET request firefighter drill record
+app.get('/firefighter/:id/drillrecord', firefighter_controller.firefighter_drill_record);
+
 //GET request to list all firefighters
 app.get('/firefighters', firefighter_controller.firefighter_list);
 

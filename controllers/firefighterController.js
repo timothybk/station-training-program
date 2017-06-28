@@ -2,7 +2,8 @@ var FireFighter = require('../models/firefighter');
 var Drill = require('../models/drill');
 var DrillInstance = require('../models/drillinstance');
 var Qualification = require('../models/qualification');
-var ShiftInstance = require('../models/shiftinstance')
+var ShiftInstance = require('../models/shiftinstance');
+var shared_methods = require('../shared_methods');
 
 var async = require('async');
 
@@ -38,35 +39,28 @@ exports.firefighter_list = function(req, res, next) {
 // Display detail page for a specific firefighter
 exports.firefighter_detail = function(req, res, next) {
 
-    async.parallel({
-        firefighter: function(callback) {
+    shared_methods.firefighter_find_all_drills(req.params.id, function(results) {
+        res.render('firefighter_detail', {
+            title: 'FireFighter',
+            firefighter: results.firefighter,
+            drillinstance_list: results.drillinstance_list,
+            shiftinstance_list: results.shiftinstance_list
+        });
 
-            FireFighter.findById(req.params.id)
-                .populate('qualifications')
-                .populate('drills')
-                .exec(callback);
-        },
+    });
+}
 
-        drillinstance_list: function(callback) {
-            DrillInstance.find({ 'firefighters': req.params.id }, 'drill date')
-                .populate('drill')
-                .sort('-date')
-                .exec(callback);
-        },
-        
-        shiftinstance_list: function (callback) {
-            ShiftInstance.find({'firefighter': req.params.id})
-            .populate('pump')
-            .sort('-date')
-            .exec(callback);
-        },
-    }, function(err, results) {
-        if (err) {
-            return next(err);
-        }
-        res.render('firefighter_detail', { title: 'FireFighter', firefighter: results.firefighter, drillinstance_list: results.drillinstance_list, shiftinstance_list: results.shiftinstance_list });
-    })
+// Display firefighter drill record in FRNSW format
+exports.firefighter_drill_record = function(req, res, next) {
+    shared_methods.firefighter_find_all_drills(req.params.id, function(results) {
+        res.render('firefighter_drill_record', {
+            title: 'FireFighter',
+            firefighter: results.firefighter,
+            drillinstance_list: results.drillinstance_list,
+            shiftinstance_list: results.shiftinstance_list
+        });
 
+    });
 };
 
 // Display firefighter create form on GET
@@ -220,7 +214,7 @@ exports.firefighter_update_post = function(req, res, next) {
         _id: req.params.id //stop a new id being assigned
     });
 
-    var errors =req.validationErrors();
+    var errors = req.validationErrors();
     if (errors) {
         //rerender ff with error info
         //get all quals for form
@@ -238,11 +232,12 @@ exports.firefighter_update_post = function(req, res, next) {
                 }
                 res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: qualifications, firefighter: firefighter, errors: errors });
             });
-    }
-    else {
+    } else {
         //data from form is valid. update record
-        FireFighter.findByIdAndUpdate(req.params.id, firefighter, {}, function (err, thefirefighter) {
-            if (err) {return next(err);}
+        FireFighter.findByIdAndUpdate(req.params.id, firefighter, {}, function(err, thefirefighter) {
+            if (err) {
+                return next(err);
+            }
             //successfull -redirect to firefighter detail
             res.redirect(thefirefighter.url);
         });
