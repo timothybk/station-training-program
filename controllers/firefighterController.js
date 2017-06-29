@@ -115,7 +115,10 @@ exports.firefighter_create_post = function(req, res, next) {
                         qualifications[i].checked = 'true';
                     }
                 }
-                res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: qualifications, firefighter: firefighter, errors: errors });
+                for (var i = errors.length - 1; i >= 0; i--) {
+                            req.flash('errors', {msg: errors[i].msg})
+                        }
+                res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: qualifications, firefighter: firefighter});
             });
     } else {
         //data from form is valid
@@ -134,6 +137,7 @@ exports.firefighter_create_post = function(req, res, next) {
                             return next(err);
                         }
                         //redirect to new ff record
+                        req.flash('success', {msg: 'FireFighter Created Successfully'});
                         res.redirect(firefighter.url);
                     });
                 }

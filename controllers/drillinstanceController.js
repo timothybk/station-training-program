@@ -94,6 +94,7 @@ exports.drillinstance_create_post = function(req, res, next) {
                 return next(err);
             }
             //Drillinstance saved. Redirect to drillinstance detail page
+            req.flash('success', {msg: 'Drill Record Created Successfully'});
             res.redirect(drillinstance.url);
         });
 

@@ -80,6 +80,7 @@ exports.appliance_create_post = function(req, res, next) {
                 return next(err);
             }
             //redirect to new ff record
+            req.flash('success', {msg: 'Appliance Created Successfully'});
             res.redirect(appliance.url);
         });
     }

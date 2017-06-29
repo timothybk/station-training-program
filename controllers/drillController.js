@@ -82,6 +82,7 @@ exports.drill_create_post = function(req, res, next) {
                         if (err) {
                             return next(err); }
                         //Drill saved. Redirect to drill detail page
+                        req.flash('success', {msg: 'Drill Created Successfully'});
                         res.redirect(drill.url);
                     });
                 }

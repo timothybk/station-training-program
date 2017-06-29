@@ -7,12 +7,6 @@ block content
     form(method='POST' action='')
         .form-group
             label(for='name') Qualification Name:
-            input#name.form-control(type='text', placeholder='Enter Name of Qualification' name='name' value=(undefined===firefighter ? '' : firefighter.number))
+            input#name.form-control(type='text', placeholder='Enter Name of Qualification' name='name' required='true' value=(undefined===firefighter ? '' : firefighter.number))
         input(type='hidden', name='_csrf', value=_csrf)
         button.btn.btn-primary(type='submit') Submit
-        
-    if errors
-        ul
-            for error in errors
-                li!= error.msg
-            

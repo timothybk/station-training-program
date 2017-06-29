@@ -297,13 +297,12 @@ exports.shiftinstance_create_post = function(req, res, next) {
                             return callback(err);
 
                         }
-                        //successful fo render
-                        res.render('shiftinstance_form', {
-                            title: 'Create ShiftInstance',
-                            firefighter_list: firefighters,
-                            shiftinstance: shiftinstance_array[total],
-                            errors: errors
-                        });
+                        //successful so render
+                        for (var i = errors.length - 1; i >= 0; i--) {
+                            req.flash('errors', {msg: errors[i].msg})
+                        }
+//currently redirecting to create_get and losing user input                        
+                        res.redirect('create');
                     });
                 return;
             } else {
@@ -325,7 +324,7 @@ exports.shiftinstance_create_post = function(req, res, next) {
         if (err) {
             return next(err);
         }
-
+        req.flash('success', {msg: 'Shift created successfully'});
         res.redirect('create')
     })
 };
