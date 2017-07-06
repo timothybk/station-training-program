@@ -1,16 +1,14 @@
 var Drill = require('../models/drill');
 var FireFighter = require('../models/firefighter');
 var DrillInstance = require('../models/drillinstance');
+var shared_methods = require('../shared_methods');
 
 var async = require('async');
 
 // Display list of all Drill
 exports.drill_list = function(req, res, next) {
-    
-    Drill.find({}, 'name code')
-    .exec(function (err, list_drills) {
-        if (err) {return next(err)};
-        res.render('drill_list', {title: 'Drill List', list_drills: list_drills});
+    shared_methods.drill_find_all(function (results) {
+        res.render('drill_list', {title: 'Drill List', list_drills: results});
     });
 };
 
