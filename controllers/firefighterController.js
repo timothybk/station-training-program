@@ -39,15 +39,71 @@ exports.firefighter_list = function(req, res, next) {
 // Display detail page for a specific firefighter
 exports.firefighter_detail = function(req, res, next) {
 
-    shared_methods.firefighter_find_all_drills(req.params.id, function(results) {
-        res.render('firefighter_detail', {
-            title: 'FireFighter',
-            firefighter: results.firefighter,
-            drillinstance_list: results.drillinstance_list,
-            shiftinstance_list: results.shiftinstance_list
-        });
+    const promiseA = FireFighter.findById(req.params.id)
+        .populate('qualifications')
+        .populate('drills')
+        .exec();
 
-    });
+    const promiseB = DrillInstance.find({'firefighters': req.param.id})
+        .populate('drill')
+        .populate('leader')
+        .sort('-date')
+        .exec();
+
+    const promiseC = ShiftInstance.find({'firefighter': req.params.id})
+        .populate('pump')
+        .sort('-date')
+        .exec();
+
+    Promise.all([promiseA, promiseB, promiseC])
+        .then((results) => {
+            res.render('firefighter_detail', {
+                title: 'FireFighter',
+                firefighter: results[0],
+                drillinstance_list: results[1],
+                shiftinstance_list: results[2]
+            })
+        })
+
+
+
+    // async.parallel({
+    //         firefighter: function(callback) {
+
+    //             FireFighter.findById(req.params.id)
+    //                 .populate('qualifications')
+    //                 .populate('drills')
+    //                 .exec(callback);
+    //         },
+
+    //         drillinstance_list: function(callback) {
+    //             DrillInstance.find({ 'firefighters': req.params.id }, 'drill leader date')
+    //                 .populate('drill')
+    //                 .populate('leader')
+    //                 .sort('-date')
+    //                 .exec(callback);
+    //         },
+
+    //         shiftinstance_list: function(callback) {
+    //             ShiftInstance.find({ 'firefighter': req.params.id })
+    //                 .populate('pump')
+    //                 .sort('-date')
+    //                 .exec(callback);
+    //         },
+    //     }, function(err, results) {
+    //         if (err) {
+
+    //             return next(err);
+    //         }
+
+    //     res.render('firefighter_detail', {
+    //         title: 'FireFighter',
+    //         firefighter: results.firefighter,
+    //         drillinstance_list: results.drillinstance_list,
+    //         shiftinstance_list: results.shiftinstance_list
+    //     });
+
+    // });
 }
 
 // Display firefighter drill record in FRNSW format
