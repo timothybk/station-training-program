@@ -44,13 +44,13 @@ exports.firefighter_detail = function(req, res, next) {
         .populate('drills')
         .exec();
 
-    const promiseB = DrillInstance.find({'firefighters': req.param.id})
+    const promiseB = DrillInstance.find({ 'firefighters': req.params.id })
         .populate('drill')
         .populate('leader')
         .sort('-date')
         .exec();
 
-    const promiseC = ShiftInstance.find({'firefighter': req.params.id})
+    const promiseC = ShiftInstance.find({ 'firefighter': req.params.id })
         .populate('pump')
         .sort('-date')
         .exec();
@@ -64,46 +64,9 @@ exports.firefighter_detail = function(req, res, next) {
                 shiftinstance_list: results[2]
             })
         })
-
-
-
-    // async.parallel({
-    //         firefighter: function(callback) {
-
-    //             FireFighter.findById(req.params.id)
-    //                 .populate('qualifications')
-    //                 .populate('drills')
-    //                 .exec(callback);
-    //         },
-
-    //         drillinstance_list: function(callback) {
-    //             DrillInstance.find({ 'firefighters': req.params.id }, 'drill leader date')
-    //                 .populate('drill')
-    //                 .populate('leader')
-    //                 .sort('-date')
-    //                 .exec(callback);
-    //         },
-
-    //         shiftinstance_list: function(callback) {
-    //             ShiftInstance.find({ 'firefighter': req.params.id })
-    //                 .populate('pump')
-    //                 .sort('-date')
-    //                 .exec(callback);
-    //         },
-    //     }, function(err, results) {
-    //         if (err) {
-
-    //             return next(err);
-    //         }
-
-    //     res.render('firefighter_detail', {
-    //         title: 'FireFighter',
-    //         firefighter: results.firefighter,
-    //         drillinstance_list: results.drillinstance_list,
-    //         shiftinstance_list: results.shiftinstance_list
-    //     });
-
-    // });
+        .catch((err) => {
+            return next(err);
+        })
 }
 
 // Display firefighter drill record in FRNSW format
@@ -122,13 +85,14 @@ exports.firefighter_drill_record = function(req, res, next) {
 // Display firefighter create form on GET
 exports.firefighter_create_get = function(req, res, next) {
     Qualification.find({}, 'name')
-        .exec(function(err, qualifications) {
-            if (err) {
-                return next(err);
-            }
-
-            res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: qualifications });
+        .exec()
+        .then((result) => {
+            res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: result });
         })
+        .catch((err) => {
+            return next(err);
+        })
+
 };
 
 // Handle firefighter create on POST
@@ -159,11 +123,9 @@ exports.firefighter_create_post = function(req, res, next) {
     var errors = req.validationErrors();
     if (errors) {
         //some problems so form neads to be rerendered
-        Qualification.find({}, 'name')
-            .exec(function(err, qualifications) {
-                if (err) {
-                    return next(err);
-                }
+        Qualification.find({})
+            .exec()
+            .then((result) => {
                 //mark selected qualifications as checked
                 for (var i = 0; i < qualifications.length; i++) {
                     if (firefighter.qualifications.indexOf(qualifications[i]._id > -1)) {
@@ -172,32 +134,36 @@ exports.firefighter_create_post = function(req, res, next) {
                     }
                 }
                 for (var i = errors.length - 1; i >= 0; i--) {
-                            req.flash('errors', {msg: errors[i].msg})
-                        }
-                res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: qualifications, firefighter: firefighter});
-            });
+                    req.flash('errors', { msg: errors[i].msg })
+                }
+                res.render('firefighter_form', {
+                    title: 'Create FireFighter',
+                    qualification_list: result,
+                    firefighter: firefighter
+                });
+            })
+            .catch((err) => {
+                return next(err)
+            })
     } else {
         //data from form is valid
         FireFighter.findOne({ 'number': req.body.number })
-            .exec(function(err, found_firefighter) {
-                console.log('found_firefighter: ' + found_firefighter);
-                if (err) {
-                    return next(err);
-                }
+            .exec()
+            .then((found_firefighter) => {
                 if (found_firefighter) {
-                    //FireFighter exists, redirect to detail page
+                    req.flash('info', {msg: 'FireFighter Already Exists'});
                     res.redirect(found_firefighter.url);
                 } else {
-                    firefighter.save(function(err) {
-                        if (err) {
-                            return next(err);
-                        }
-                        //redirect to new ff record
-                        req.flash('success', {msg: 'FireFighter Created Successfully'});
-                        res.redirect(firefighter.url);
-                    });
+                    firefighter.save()
+                        .then(() => {
+                            req.flash('success', { msg: 'FireFighter Created Successfully' });
+                            res.redirect(firefighter.url);
+                        })
                 }
-            });
+            })
+            .catch((err) => {
+                return next(err);
+            })
     }
 };
 
@@ -217,33 +183,33 @@ exports.firefighter_update_get = function(req, res, next) {
     req.sanitize('id').trim();
 
     //Get firefighters, qualifications for form
-    async.parallel({
-        firefighter: function(callback) {
-            FireFighter.findById(req.params.id)
-                .populate('qualifications')
-                .exec(callback);
-        },
-        qualifications: function(callback) {
-            Qualification.find(callback);
-        },
-    }, function(err, results) {
-        if (err) {
-            return next(err);
-        }
-        //Mark selected qualifications as checked
-        for (var all_q_iter = 0; all_q_iter < results.qualifications.length; all_q_iter++) {
-            for (var ff_q_iter = 0; ff_q_iter < results.firefighter.qualifications.length; ff_q_iter++) {
-                if (results.qualifications[all_q_iter]._id.toString() == results.firefighter.qualifications[ff_q_iter]._id.toString()) {
-                    results.qualifications[all_q_iter].checked = 'true';
+    promiseA = FireFighter.findById(req.params.id)
+        .populate('qualifications')
+        .exec()
+
+    promiseB = Qualification.find({})
+        .exec()
+
+    Promise.all([promiseA, promiseB])
+        .then((results) => {
+
+            //Mark selected qualifications as checked
+            for (var all_q_iter = 0; all_q_iter < results[1].length; all_q_iter++) {
+                for (var ff_q_iter = 0; ff_q_iter < results[0].qualifications.length; ff_q_iter++) {
+                    if (results[1][all_q_iter]._id.toString() == results[0].qualifications[ff_q_iter]._id.toString()) {
+                        results[1][all_q_iter].checked = 'true';
+                    }
                 }
             }
-        }
-        res.render('firefighter_form', {
-            title: 'Update FireFighter',
-            firefighter: results.firefighter,
-            qualification_list: results.qualifications
+            res.render('firefighter_form', {
+                title: 'Update FireFighter',
+                firefighter: results[0],
+                qualification_list: results[1]
+            })
         })
-    });
+        .catch((err) => {
+            return next(err);
+        })
 
 };
 
@@ -278,20 +244,22 @@ exports.firefighter_update_post = function(req, res, next) {
     if (errors) {
         //rerender ff with error info
         //get all quals for form
-        Qualification.find({}, 'name')
-            .exec(function(err, qualifications) {
-                if (err) {
-                    return next(err);
-                }
+        Qualification.find({})
+            .exec()
+            .then((results) => {
+
                 //mark selected qualifications as checked
-                for (var i = 0; i < qualifications.length; i++) {
-                    if (firefighter.qualifications.indexOf(qualifications[i]._id > -1)) {
+                for (var i = 0; i < results.length; i++) {
+                    if (firefighter.qualifications.indexOf(results[i]._id) > -1) {
                         //Current qualifications is selected. Set 'checked' flag.
-                        qualifications[i].checked = 'true';
+                        results[i].checked = 'true';
                     }
                 }
-                res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: qualifications, firefighter: firefighter, errors: errors });
-            });
+                res.render('firefighter_form', { title: 'Create FireFighter', qualification_list: results, firefighter: firefighter, errors: errors });
+            })
+            .catch((err) => {
+                return next(err);
+            })
     } else {
         //data from form is valid. update record
         FireFighter.findByIdAndUpdate(req.params.id, firefighter, {}, function(err, thefirefighter) {
@@ -299,6 +267,7 @@ exports.firefighter_update_post = function(req, res, next) {
                 return next(err);
             }
             //successfull -redirect to firefighter detail
+            req.flash('success', { msg: 'FireFighter Updated Successfully' });
             res.redirect(thefirefighter.url);
         });
     }

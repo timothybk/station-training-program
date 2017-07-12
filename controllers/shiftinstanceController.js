@@ -30,193 +30,30 @@ exports.shiftinstance_detail = function(req, res, next) {
 
 //Display ShiftInstance create form on GET
 exports.shiftinstance_create_get = function(req, res, next) {
-    var firefighter_listing;
-    var md_listing;
-    async.series({
-            lists: function(callback) {
-                async.parallel({
-                    appliance_list: function(callback) {
-                        Appliance.find({})
-                            .populate('qualifications')
-                            .exec(function(err, results) {
-                                if (err) {
 
-                                    return next(err);
-                                }
-                                callback(null, results);
+    ShiftInstance.aggregate()
+        .lookup({ from: 'firefighters', localField: 'firefighter', foreignField: '_id', as: 'firefighter' })
+        .lookup({ from: 'appliances', localField: 'pump', foreignField: '_id', as: 'pump' })
+        .facet({
+            flyer: [{$match: {'pump.name' : 'flyer'}}],
+            bronto: [{$match: {'pump.name' : 'bronto'}}]
+        })
+        .exec((result) => {
+            console.log(result);
+        })
 
-                            });
-                    },
-                    firefighter_list: function(callback) {
-                        FireFighter.find({})
-                            .populate('qualifications')
-
-                            .exec(function(err, results) {
-                                if (err) {
-                                    return next(err);
-                                }
-                                callback(null, results);
-                            });
-                    },
-                    md_list: function(callback) {
-                        Qualification.find({ 'name': 'md' })
-                            .exec(function(err, results) {
-                                if (err) {
-                                    return next(err);
-                                }
-                                FireFighter.find({})
-                                    .where('qualifications').in(results)
-                                    .exec(function(err, results) {
-                                        if (err) {
-                                            return next(err);
-                                        }
-
-                                        callback(null, results);
-                                    });
-                            });
-                    }
-                }, function(err, list_parallel) {
-                    if (err) {
-                        return next(err);
-                    }
-                    firefighter_listing = list_parallel.firefighter_list;
-                    md_listing = list_parallel.md_list;
-                    callback(null, list_parallel);
-                });
-            },
-            rankings: function(callback) {
-                async.parallel({
-                        back_list: function(callback) {
-                            async.waterfall([
-                                function(callback) {
-                                    Appliance.find({}, 'name')
-                                        .exec(function(err, appliance_names) {
-                                            if (err) {
-                                                return next(err);
-                                            }
-                                            callback(null, appliance_names);
-                                        });
-                                },
-                                function(appliance_names, callback) {
-                                    async.mapValues(
-                                        appliance_names,
-                                        function(appliance, key, callback) {
-                                            var firefighter_list = firefighter_listing;
-                                            async.sortBy(firefighter_list, function(firefighter, callback) {
-                                                ShiftInstance.find({})
-                                                    .populate('firefighter')
-                                                    .populate('pump')
-                                                    .where('firefighter').equals(firefighter._id.toString())
-                                                    .where('pump').equals(appliance_names[key]._id.toString())
-                                                    .exec(function(err, shift_instances) {
-                                                        if (err) {
-                                                            return next(err);
-                                                        } else if (shift_instances.length === 0 || shift_instances === undefined) {
-                                                            callback(err, 0);
-                                                        } else {
-                                                            callback(err, shift_instances.length);
-                                                        }
-                                                    });
-                                            }, function(err, results) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                callback(null, results);
-                                            });
-                                        },
-                                        function(err, mapResults) {
-                                            if (err) {
-                                                return next(err);
-                                            }
-                                            callback(null, mapResults);
-                                        });
-                                }
-                            ], function(err, rankingsWaterfallResults) {
-                                if (err) {
-                                    return next(err);
-                                }
-                                callback(null, rankingsWaterfallResults);
-                            });
-
-                        },
-                        md_list: function(callback) {
-                            async.waterfall([
-                                function(callback) {
-                                    Appliance.find({}, 'name')
-                                        .exec(function(err, appliance_names) {
-                                            if (err) {
-                                                return next(err);
-                                            }
-                                            callback(null, appliance_names);
-                                        });
-                                },
-                                function(appliance_names, callback) {
-                                    async.mapValues(
-                                        appliance_names,
-                                        function(appliance, key, callback) {
-                                            var firefighter_list = md_listing;
-                                            async.sortBy(firefighter_list, function(firefighter, callback) {
-                                                ShiftInstance.find({})
-                                                    .populate('firefighter')
-                                                    .populate('pump')
-                                                    .where('firefighter').equals(firefighter._id.toString())
-                                                    .where('pump').equals(appliance_names[key]._id.toString())
-                                                    .exec(function(err, shift_instances) {
-                                                        if (err) {
-                                                            return next(err);
-                                                        } else if (shift_instances.length === 0 || shift_instances === undefined) {
-                                                            callback(err, 0);
-                                                        } else {
-                                                            callback(err, shift_instances.length);
-                                                        }
-                                                    });
-                                            }, function(err, results) {
-                                                if (err) {
-                                                    return next(err);
-                                                }
-                                                callback(null, results);
-                                            });
-                                        },
-                                        function(err, mapResults) {
-                                            if (err) {
-                                                return next(err);
-                                            }
-                                            callback(null, mapResults);
-                                        });
-                                }
-                            ], function(err, rankingsWaterfallResults) {
-                                if (err) {
-                                    return next(err);
-                                }
-                                callback(null, rankingsWaterfallResults);
-                            });
-
-                        }
-                    }, function(err, rankings_parallel) {
-                        if (err) {
-                            return next(err);
-                        }
-                        callback(null, rankings_parallel);
-                    }
+    
 
 
-                );
 
-            }
-        },
-        function(err, results) {
-            if (err) {
-                return next(err);
-            }
-
-            res.render('shiftinstance_form', {
-                title: 'Shift create form',
-                appliance_list: results.lists.appliance_list,
-                ranking_lists: results.rankings.back_list,
-                md_list: results.rankings.md_list
-            });
-        }
-    );
+    //             res.render('shiftinstance_form', {
+    //                 title: 'Shift create form',
+    //                 appliance_list: results.lists.appliance_list,
+    //                 ranking_lists: results.rankings.back_list,
+    //                 md_list: results.rankings.md_list
+    //             });
+    //         }
+    //     );
 
 };
 // Handle ShiftInstance create on POST
@@ -299,9 +136,9 @@ exports.shiftinstance_create_post = function(req, res, next) {
                         }
                         //successful so render
                         for (var i = errors.length - 1; i >= 0; i--) {
-                            req.flash('errors', {msg: errors[i].msg})
+                            req.flash('errors', { msg: errors[i].msg })
                         }
-//currently redirecting to create_get and losing user input                        
+                        //currently redirecting to create_get and losing user input                        
                         res.redirect('create');
                     });
                 return;
@@ -324,7 +161,7 @@ exports.shiftinstance_create_post = function(req, res, next) {
         if (err) {
             return next(err);
         }
-        req.flash('success', {msg: 'Shift created successfully'});
+        req.flash('success', { msg: 'Shift created successfully' });
         res.redirect('create')
     })
 };
