@@ -16,35 +16,17 @@ block content
 				option(value='night') Night Shift
 
 		each appliance, index in appliance_list
-
 			hr
 			each seat in appliance.seats
 				.form-group
-					label(for=appliance.name + seat) #{appliance.name} #{seat}
+					label(for=appliance.name + seat) #{appliance.name}
 					select(id=appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=appliance.name + seat, required='true')
+						each fire_fighter in ranking_list[index].shifts
+							option(value=fire_fighter._id) #{fire_fighter.fulltitle}
+						option(disabled) -------------------
+						each firefighter in firefighter_list
+							option(value=firefighter._id, style={color:'red'}) #{firefighter.fulltitle}
+								
 
-						if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
-							each firefighter in md_list[index]
-								if (firefighter.rank != 'Station Officer')
-									option(value=firefighter._id) #{firefighter.fulltitle}
-						else if (appliance.qualifications.length > 0)
-							if (appliance.name == 'rescuepump' && seat == 'three')
-								each firefighter in ranking_lists[index]
-									if (firefighter.rank != 'Station Officer')
-										option(value=firefighter._id) #{firefighter.fulltitle}
-							else	
-								each firefighter in ranking_lists[index]
-
-									if (firefighter.rank != 'Station Officer')
-										each val in firefighter.qualifications
-											if (val.name == appliance.qualifications[0].name)
-												option(value=firefighter._id) #{firefighter.fulltitle}
-
-						else
-							each firefighter in ranking_lists[index]
-								if (firefighter.rank != 'Station Officer')
-									option(value=firefighter._id) #{firefighter.fulltitle}
-		input(type='hidden', name='_csrf', value=_csrf)
-						
 
 		button.btn.btn-primary(type='submit') Submit
