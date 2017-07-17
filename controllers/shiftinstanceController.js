@@ -31,114 +31,107 @@ exports.shiftinstance_detail = function(req, res, next) {
 //Display ShiftInstance create form on GET
 exports.shiftinstance_create_get = function(req, res, next) {
 
-const findAppliances = Appliance.find()
-    .populate('qualifications')
-    .exec()
-
-const findFireFighters = FireFighter.find()
-    .populate('qualifications')
-    .exec()
-
-Promise.all([findAppliances, findFireFighters])
-    .then(([applianceArray, firefighterArray]) => {
-        return Promise.all(applianceArray.map((appliance) => {
-            return ShiftInstance.find()
-                .where('pump').eq(appliance._id)
-                .populate('firefighter pump')
-                .exec();
-
-        }))
-    })
-    .then((result) => {
-        return result.map((item) => {
-            return item.reduce(function(last, now) {
-                const index = last[0].indexOf(now.firefighter.name);
-
-                if (index === -1) {
-                    last[0].push(now.firefighter.name);
-                    last[1].push(1);
-                }
-                else {
-                    last[1][index] += 1;
-                }
-
-                return last;
-            }, [
-                [],
-                []
-            ]).reduce(function(last, now, index, context) {
-                var zip = [];
-                last.forEach(function(word, i) {
-                    zip.push([word, context[1][i]])
-                });
-                return zip;
-            })
+    const prev_shifts = FireFighter.aggregate()
+        .lookup({ from: 'shiftinstances', localField: '_id', foreignField: 'firefighter', as: 'shifts' })
+        .unwind('shifts')
+        .lookup({ from: 'appliances', localField: 'shifts.pump', foreignField: '_id', as: 'shifts.pump' })
+        .group({
+            _id: { name: '$name', pump: '$shifts.pump.name' },
+            count: { $sum: 1 }
         })
-    })
-    .then((result) => {
-        
-        
-            
-        res.render('shiftinstance_form', {
-            title: 'Shift create form',
-            appliance_list: appliance_list,
-            ranking_list: back_rankings(),
-            firefighter_list: firefighter_list
-                //md_list: results.rankings.md_list
-        });
-    })
-    .catch((err) => {
-        return next(err);
-    })
-}
+        .sort({ count: -1 })
+        .exec()
 
 
 
+    const promise_appliance_list = Appliance.find({})
+        .populate('qualifications')
+        .exec()
+
+    const promise_firefighter_list = FireFighter.find({})
+        .populate('qualifications')
+        .exec()
+
+    Promise.all([prev_shifts, promise_appliance_list, promise_firefighter_list])
+        .then(([prev_shifts, appliance_list, firefighter_list]) => {
+
+            const back_rankings = () => {
+                const pumps = [];
+                const shifts_sorted = [];
+
+                function ShiftsByPump(pump, shifts) {
+                    this.pump = pump;
+                    this.shifts = shifts;
+                }
+
+                for (var i = appliance_list.length - 1; i >= 0; i--) {
+                    pumps.push(appliance_list[i])
+                }
+
+                for (var i = pumps.length - 1; i >= 0; i--) {
+                    const shift_array = [];
+                    for (var j = prev_shifts.length - 1; j >= 0; j--) {
+                        if (prev_shifts[j]._id.pump[0] === pumps[i].name) {
+                            shift_array.push(firefighter_list.find((ff) => {
+                                return ff.name === prev_shifts[j]._id.name;
+                            }));
+                        }
+                    }
+                    for (var k = firefighter_list.length - 1; k >= 0; k--) {
+                        if (shift_array.indexOf(firefighter_list[k]) === -1 && firefighter_list[k].rank != 'Station Officer') {
+                            if (pumps[i].qualifications.length > 0 && firefighter_list[k].qualifications.length > 0) {
+                                function isInArray(arr, val) {
+                                    return arr.some(arrVal =>
+                                        val.name === arrVal.name)
+                                }
+                                if (isInArray(firefighter_list[k].qualifications, pumps[i].qualifications[0])) {
+
+                                    shift_array.unshift(firefighter_list[k]);
+
+                                }
+
+                            } else if (pumps[i].qualifications.length === 0) {
+                                shift_array.unshift(firefighter_list[k]);
+                            } else if (pumps[i].name === 'rescuepump') {
+                                shift_array.push(firefighter_list[k]);
+                            }
 
 
-// const prev_shifts = FireFighter.aggregate()
-//     .lookup({ from: 'shiftinstances', localField: '_id', foreignField: 'firefighter', as: 'shifts' })
-//     .unwind('shifts')
-//     .lookup({ from: 'appliances', localField: 'shifts.pump', foreignField: '_id', as: 'shifts.pump' })
-//     .group({
-//         _id: { name: '$name', pump: '$shifts.pump.name' },
-//         count: { $sum: 1 }
-//     })
-//     .sort({ count: -1 })
-//     .exec()
+                        }
+
+                    }
+                    const toShiftByPump = new ShiftsByPump(pumps[i], shift_array);
+                    shifts_sorted.push(toShiftByPump);
+                }
+                return shifts_sorted;
+            }
+
+
+            res.render('shiftinstance_form', {
+                title: 'Shift create form',
+                appliance_list: appliance_list,
+                ranking_list: back_rankings(),
+                firefighter_list: firefighter_list
+                    //md_list: results.rankings.md_list
+            });
+        })
+        .catch((err) => {
+            return next(err);
+        })
 
 
 
-
-// })
-//         .catch((err) => {
-//             return next(err);
-//         })
-
-
-
-
+};
 // Handle ShiftInstance create on POST
 exports.shiftinstance_create_post = function(req, res, next) {
     var appliance_arr = [];
     var shiftinstance_array = [];
 
+    Appliance.find({}, 'name seats')
+        .then((result) => {
+            appliance_arr = result;
 
-    async.series([
-        function(callback) {
-            Appliance.find({}, 'name seats')
-                .exec(function(err, appliances) {
-                    if (err) {
-                        return next(err);
-                    }
-                    appliance_arr = appliances;
-                    callback();
 
-                });
-
-        },
-
-        function(callback) {
             req.checkBody('date', 'Invalid date').isDate();
 
             for (var i = 0; i < appliance_arr.length; i++) {
@@ -184,54 +177,38 @@ exports.shiftinstance_create_post = function(req, res, next) {
                 }
             }
 
-
-
-
-
             var errors = req.validationErrors();
             if (errors) {
                 FireFighter.find({}, 'name')
-                    .exec(function(err, firefighters) {
-                        if (err) {
-                            return callback(err);
-
-                        }
+                    .then((firefighters) => {
                         //successful so render
                         for (var i = errors.length - 1; i >= 0; i--) {
-                            req.flash('errors', {
-                                msg: errors[i].msg
-                            })
+                            req.flash('errors', { msg: errors[i].msg })
                         }
                         //currently redirecting to create_get and losing user input                        
                         res.redirect('create');
                     });
-                return;
+            } else {
+
+                Promise.all(shiftinstance_array.map((shiftinstance) => {
+                        shiftinstance.save();
+                    }))
+                    .then(() => {
+                        req.flash('success', { msg: 'Shift created successfully' }); 
+                        res.redirect('create');
+                    })
+                        
+
             }
-            else {
-                //Data from form is valid
-                async.each(shiftinstance_array, function(shiftinstance, callback) {
-                    shiftinstance.save();
-                    callback();
-                }, function(err, results) {
-                    if (err) {
-                        return callback(err);
-                    }
-                });
 
-            };
-            callback();
+        })
+        .catch((err) => {
+            if (err) {
+                return next(err);
+            }
+        })
+}
 
-        }
-    ], function(err) {
-        if (err) {
-            return next(err);
-        }
-        req.flash('success', {
-            msg: 'Shift created successfully'
-        });
-        res.redirect('create')
-    })
-};
 
 // Display ShiftInstance delete form on GET
 exports.shiftinstance_delete_get = function(req, res) {
@@ -302,8 +279,7 @@ exports.shiftinstance_update_post = function(req, res, next) {
                     errors: errors
                 });
             });
-    }
-    else {
+    } else {
 
         //data from form is valid. update record
         ShiftInstance.findByIdAndUpdate(req.params.id, {

@@ -5,6 +5,7 @@ block content
 	h1=title
 
 	form(method='POST' action='')
+		input(type='hidden', name='_csrf', value=_csrf)
 		.form-group
 			label(for='date') Date:
 			input#date.form-control(type='date' name='date' required='true' value=(undefined===shiftinstance ? '' : shiftinstance.date))
@@ -28,5 +29,5 @@ block content
 							option(value=firefighter._id, style={color:'red'}) #{firefighter.fulltitle}
 								
 
-
+		
 		button.btn.btn-primary(type='submit') Submit
