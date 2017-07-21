@@ -31,7 +31,7 @@ exports.shiftinstance_detail = function(req, res, next) {
 //Display ShiftInstance create form on GET
 exports.shiftinstance_create_get = function(req, res, next) {
 
-    const prev_shifts = FireFighter.aggregate()
+const prev_shifts = FireFighter.aggregate()
         .lookup({ from: 'shiftinstances', localField: '_id', foreignField: 'firefighter', as: 'shifts' })
         .unwind('shifts')
         .lookup({ from: 'appliances', localField: 'shifts.pump', foreignField: '_id', as: 'shifts.pump' })
@@ -122,6 +122,47 @@ exports.shiftinstance_create_get = function(req, res, next) {
 
 
 };
+
+
+//     const promise_appliance_list = Appliance.find({})
+//         .populate('qualifications')
+//         .exec()
+
+//     const promise_firefighter_list = FireFighter.find({})
+//         .populate('qualifications')
+//         .exec()
+
+//     Promise.all([promise_appliance_list, promise_firefighter_list])
+//         .then(([appliance_list, firefighter_list]) => {
+            
+//             const base = {};
+
+//             return Promise.all(appliance_list.map((appliance) => {
+//                 base[appliance.name] = {};
+//                 return Promise.all(firefighter_list.map((firefighter) => {
+//                     return ShiftInstance.find()
+//                         .where('pump').eq(appliance._id)
+//                         .where('firefighter').eq(firefighter._id)
+//                         .populate('pump firefighter')
+//                         .then((result) => {                            
+//                             base[appliance.name][firefighter.name.toLowerCase()] = result;
+//                         })
+//                 }))
+//             }))
+//             .then(() => {
+//                 return base
+//             })
+//         })
+//         .then((result) => {
+//             console.log(result.bronto.toArray)
+//         })
+//         .catch((err) => {
+//             return next(err);
+//         })
+
+// }
+
+//     
 // Handle ShiftInstance create on POST
 exports.shiftinstance_create_post = function(req, res, next) {
     var appliance_arr = [];
