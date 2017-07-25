@@ -18,15 +18,16 @@ block content
 
 		each appliance, index in appliance_list
 			hr
-			each seat in appliance.seats
+			p=appliance[0].name
+			for seat in appliance[0].seats
 				.form-group
-					label(for=appliance.name + seat) #{appliance.name}
-					select(id=appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=appliance.name + seat, required='true')
-						each fire_fighter in ranking_list[index].shifts
-							option(value=fire_fighter._id) #{fire_fighter.fulltitle}
-						option(disabled) -------------------
-						each firefighter in firefighter_list
-							option(value=firefighter._id, style={color:'red'}) #{firefighter.fulltitle}
+					label(for=appliance[0].name + seat) #{appliance[0].name} #{seat}
+					select(id=appliance[0].name + seat, class='form-control', type='select', placeholder='select firefighter', name=appliance[0].name + seat, required='true')
+						for ff in appliance[1]
+							if ff[1] === 0
+								option(value=ff[0]._id) #{ff[0].fulltitle} : 0
+							else
+								option(value=ff[0]._id) #{ff[0].fulltitle} : #{ff[1].length}
 								
 
 		
