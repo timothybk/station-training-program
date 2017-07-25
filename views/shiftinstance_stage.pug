@@ -1,0 +1,15 @@
+extends layout
+
+block content
+
+    h1=title
+    
+    form(method='POST' action='')
+        input(type='hidden', name='_csrf', value=_csrf)
+        for firefighter in firefighter_list
+        
+            .form-check
+                input(class='checkbox-input' type='checkbox' value=firefighter._id name='firefighter' id=firefighter._id)
+                label(for=firefighter._id) #{firefighter.fulltitle}
+    button.btn.btn-primary(type='submit') Submit
+            

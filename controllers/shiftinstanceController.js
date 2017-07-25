@@ -31,97 +31,17 @@ exports.shiftinstance_detail = function(req, res, next) {
 //Display ShiftInstance create form on GET
 exports.shiftinstance_create_get = function(req, res, next) {
 
-const prev_shifts = FireFighter.aggregate()
-        .lookup({ from: 'shiftinstances', localField: '_id', foreignField: 'firefighter', as: 'shifts' })
-        .unwind('shifts')
-        .lookup({ from: 'appliances', localField: 'shifts.pump', foreignField: '_id', as: 'shifts.pump' })
-        .group({
-            _id: { name: '$name', pump: '$shifts.pump.name' },
-            count: { $sum: 1 }
-        })
-        .sort({ count: -1 })
-        .exec()
+// const prev_shifts = FireFighter.aggregate()
+//         .lookup({ from: 'shiftinstances', localField: '_id', foreignField: 'firefighter', as: 'shifts' })
+//         .unwind('shifts')
+//         .lookup({ from: 'appliances', localField: 'shifts.pump', foreignField: '_id', as: 'shifts.pump' })
+//         .group({
+//             _id: { name: '$name', pump: '$shifts.pump.name' },
+//             count: { $sum: 1 }
+//         })
+//         .sort({ count: -1 })
+//         .exec()
 
-
-
-    const promise_appliance_list = Appliance.find({})
-        .populate('qualifications')
-        .exec()
-
-    const promise_firefighter_list = FireFighter.find({})
-        .populate('qualifications')
-        .exec()
-
-    Promise.all([prev_shifts, promise_appliance_list, promise_firefighter_list])
-        .then(([prev_shifts, appliance_list, firefighter_list]) => {
-
-            const back_rankings = () => {
-                const pumps = [];
-                const shifts_sorted = [];
-
-                function ShiftsByPump(pump, shifts) {
-                    this.pump = pump;
-                    this.shifts = shifts;
-                }
-
-                for (var i = appliance_list.length - 1; i >= 0; i--) {
-                    pumps.push(appliance_list[i])
-                }
-
-                for (var i = pumps.length - 1; i >= 0; i--) {
-                    const shift_array = [];
-                    for (var j = prev_shifts.length - 1; j >= 0; j--) {
-                        if (prev_shifts[j]._id.pump[0] === pumps[i].name) {
-                            shift_array.push(firefighter_list.find((ff) => {
-                                return ff.name === prev_shifts[j]._id.name;
-                            }));
-                        }
-                    }
-                    for (var k = firefighter_list.length - 1; k >= 0; k--) {
-                        if (shift_array.indexOf(firefighter_list[k]) === -1 && firefighter_list[k].rank != 'Station Officer') {
-                            if (pumps[i].qualifications.length > 0 && firefighter_list[k].qualifications.length > 0) {
-                                function isInArray(arr, val) {
-                                    return arr.some(arrVal =>
-                                        val.name === arrVal.name)
-                                }
-                                if (isInArray(firefighter_list[k].qualifications, pumps[i].qualifications[0])) {
-
-                                    shift_array.unshift(firefighter_list[k]);
-
-                                }
-
-                            } else if (pumps[i].qualifications.length === 0) {
-                                shift_array.unshift(firefighter_list[k]);
-                            } else if (pumps[i].name === 'rescuepump') {
-                                shift_array.push(firefighter_list[k]);
-                            }
-
-
-                        }
-
-                    }
-                    const toShiftByPump = new ShiftsByPump(pumps[i], shift_array);
-                    shifts_sorted.push(toShiftByPump);
-                }
-                return shifts_sorted;
-            }
-
-
-            res.render('shiftinstance_form', {
-                title: 'Shift create form',
-                appliance_list: appliance_list,
-                ranking_list: back_rankings(),
-                firefighter_list: firefighter_list
-                    //md_list: results.rankings.md_list
-            });
-        })
-        .catch((err) => {
-            return next(err);
-        })
-
-
-
-};
 
 
 //     const promise_appliance_list = Appliance.find({})
@@ -132,35 +52,108 @@ const prev_shifts = FireFighter.aggregate()
 //         .populate('qualifications')
 //         .exec()
 
-//     Promise.all([promise_appliance_list, promise_firefighter_list])
-//         .then(([appliance_list, firefighter_list]) => {
-            
-//             const base = {};
+//     Promise.all([prev_shifts, promise_appliance_list, promise_firefighter_list])
+//         .then(([prev_shifts, appliance_list, firefighter_list]) => {
 
-//             return Promise.all(appliance_list.map((appliance) => {
-//                 base[appliance.name] = {};
-//                 return Promise.all(firefighter_list.map((firefighter) => {
-//                     return ShiftInstance.find()
-//                         .where('pump').eq(appliance._id)
-//                         .where('firefighter').eq(firefighter._id)
-//                         .populate('pump firefighter')
-//                         .then((result) => {                            
-//                             base[appliance.name][firefighter.name.toLowerCase()] = result;
-//                         })
-//                 }))
-//             }))
-//             .then(() => {
-//                 return base
-//             })
-//         })
-//         .then((result) => {
-//             console.log(result.bronto.toArray)
+//             const back_rankings = () => {
+//                 const pumps = [];
+//                 const shifts_sorted = [];
+
+//                 function ShiftsByPump(pump, shifts) {
+//                     this.pump = pump;
+//                     this.shifts = shifts;
+//                 }
+
+//                 for (var i = appliance_list.length - 1; i >= 0; i--) {
+//                     pumps.push(appliance_list[i])
+//                 }
+
+//                 for (var i = pumps.length - 1; i >= 0; i--) {
+//                     const shift_array = [];
+//                     for (var j = prev_shifts.length - 1; j >= 0; j--) {
+//                         if (prev_shifts[j]._id.pump[0] === pumps[i].name) {
+//                             shift_array.push(firefighter_list.find((ff) => {
+//                                 return ff.name === prev_shifts[j]._id.name;
+//                             }));
+//                         }
+//                     }
+//                     for (var k = firefighter_list.length - 1; k >= 0; k--) {
+//                         if (shift_array.indexOf(firefighter_list[k]) === -1 && firefighter_list[k].rank != 'Station Officer') {
+//                             if (pumps[i].qualifications.length > 0 && firefighter_list[k].qualifications.length > 0) {
+//                                 function isInArray(arr, val) {
+//                                     return arr.some(arrVal =>
+//                                         val.name === arrVal.name)
+//                                 }
+//                                 if (isInArray(firefighter_list[k].qualifications, pumps[i].qualifications[0])) {
+
+//                                     shift_array.unshift(firefighter_list[k]);
+
+//                                 }
+
+//                             } else if (pumps[i].qualifications.length === 0) {
+//                                 shift_array.unshift(firefighter_list[k]);
+//                             } else if (pumps[i].name === 'rescuepump') {
+//                                 shift_array.push(firefighter_list[k]);
+//                             }
+
+
+//                         }
+
+//                     }
+//                     const toShiftByPump = new ShiftsByPump(pumps[i], shift_array);
+//                     shifts_sorted.push(toShiftByPump);
+//                 }
+//                 return shifts_sorted;
+//             }
+
+
+//             res.render('shiftinstance_form', {
+//                 title: 'Shift create form',
+//                 appliance_list: appliance_list,
+//                 ranking_list: back_rankings(),
+//                 firefighter_list: firefighter_list
+//                     //md_list: results.rankings.md_list
+//             });
 //         })
 //         .catch((err) => {
 //             return next(err);
 //         })
 
-// }
+
+
+// };
+
+
+    const promise_appliance_list = Appliance.find({})
+        .populate('qualifications')
+        .exec()
+
+    const promise_firefighter_list = FireFighter.find({})
+        .populate('qualifications')
+        .exec()
+
+    Promise.all([promise_appliance_list, promise_firefighter_list])
+        .then(([appliance_list, firefighter_list]) => {
+            return Promise.all(appliance_list.map((appliance) => {
+                return Promise.all(firefighter_list.map((firefighter) => {
+                    return ShiftInstance.find()
+                        .where('pump').eq(appliance._id)
+                        .where('firefighter').eq(firefighter._id)
+                        .populate('pump firefighter')
+                        .exec();
+                }))
+            }))
+        })
+        .then((results) => {
+            for (const result in results){ 
+            console.log(result.length)
+            }
+        })
+        .catch((err) => {
+            return next(err);
+        })
+
+}
 
 //     
 // Handle ShiftInstance create on POST
