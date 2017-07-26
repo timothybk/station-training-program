@@ -284,6 +284,12 @@ app.get('/qualifications', qualification_controller.qualification_list);
 /*GET request for creating a ff*/
 app.get('/shiftinstance/create', shiftinstance_controller.shiftinstance_create_get);
 
+//GET request for creating shiftinstance landing
+app.get('/shiftinstance/land', shiftinstance_controller.shiftinstance_landing_get);
+
+//POST request for creating shiftinstance landing
+app.post('/shiftinstance/land', shiftinstance_controller.shiftinstance_landing_post);
+
 //POST request for creating shiftinstance
 app.post('/shiftinstance/create', shiftinstance_controller.shiftinstance_create_post);
 

@@ -1,0 +1,15 @@
+extends layout
+
+block content
+    form(method='POST' action='')
+        input(type='hidden', name='_csrf', value=_csrf)
+        .form-group
+            label(for='firefighters') Firefighters on duty:
+            select#firefighters.form-control(type='select' placeholder='Firefighters on shift' name='firefighters' class='selectpicker' multiple required='true')
+                for firefighter in firefighter_list
+                    if drillinstance
+                        option(value=firefighter._id selected=(firefighter._id.toString()==landinstance.firefighter ? 'selected' : false)) #{firefighter.fulltitle}
+                    else
+                        option(value=firefighter._id) #{firefighter.fulltitle}
+        
+        button.btn.btn-primary(type=submit) Submit
