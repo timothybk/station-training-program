@@ -5,6 +5,7 @@ var Qualification = require('../models/qualification');
 var ShiftInstance = require('../models/shiftinstance');
 
 var async = require('async');
+const _ = require('lodash');
 
 // Display list of all ShifTinstances
 exports.shiftinstance_list = function(req, res) {
@@ -29,18 +30,21 @@ exports.shiftinstance_detail = function(req, res, next) {
 };
 
 //display ShiftInstance landing on get
-exports.shiftinstance_landing_get = function (req, res, next) {
+exports.shiftinstance_landing_get = function(req, res, next) {
     FireFighter.find({})
         .then((result) => {
+            let sortResult = result.sort((a, b) => {                
+                return a.number - b.number;
+            })
             res.render('shiftinstance_landing', {
                 title: 'Landing',
-                firefighter_list: result
+                firefighter_list: sortResult
             });
         })
 }
 
 //handle ShiftInstance landing on post
-exports.shiftinstance_landing_post = function (req, res, next) {
+exports.shiftinstance_landing_post = function(req, res, next) {
     req.sanitize('firefighters').escape();
     req.sanitize('firefighters').trim();
     res.redirect('create/?valid=' + req.body.firefighters);
@@ -48,18 +52,21 @@ exports.shiftinstance_landing_post = function (req, res, next) {
 
 //Display ShiftInstance create form on GET
 exports.shiftinstance_create_get = function(req, res, next) {
-    //const firefighters = req.query.valid;
+    const firefighters = req.query.valid.split(',');
 
     const promise_appliance_list = Appliance.find({})
         .populate('qualifications')
         .exec()
 
-    const promise_firefighter_list = FireFighter.find({})
+    const promise_firefighter_list = FireFighter.find({ _id: firefighters })
         .populate('qualifications')
         .exec()
 
-    Promise.all([promise_appliance_list, promise_firefighter_list])
-        .then(([appliance_list, firefighter_list]) => {
+    const promise_qualification_list = Qualification.find({})
+        .exec()
+
+    Promise.all([promise_appliance_list, promise_firefighter_list, promise_qualification_list])
+        .then(([appliance_list, firefighter_list, qualification_list]) => {
             return Promise.all(appliance_list.map((appliance) => {
                 return Promise.all(firefighter_list.map((firefighter) => {
                         return ShiftInstance.find()
@@ -72,6 +79,7 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                 } else {
                                     return [firefighter, results]
                                 }
+
                             });
                     }))
                     .then((results) => {
@@ -82,11 +90,15 @@ exports.shiftinstance_create_get = function(req, res, next) {
                                 return a[1].length - b[1].length;
                             }
                         })
-                        for (let ff of sortResult){
-                            if(ff[0].qualifications.name === 'rescue'){
-                                console.log(ff[0].qualifications)
-                            }
-                        }
+                        // for (let i = 0; i < sortResult.length - 1; i++) {
+                        //     if (_.intersectionWith(sortResult[i][0].qualifications, appliance.qualifications, _.isEqual).length < 1) {
+                        //         sortResult.push(sortResult.splice(i, 1)[0]);
+                        //         console.log(sortResult)
+                        //     } else {
+                        //         console.log(i)
+                        //     }
+                        // }
+                        //console.log(sortResult);
                         return [appliance, sortResult]
                     })
             }))
