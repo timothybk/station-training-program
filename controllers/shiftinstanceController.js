@@ -8,16 +8,16 @@ var async = require('async');
 const _ = require('lodash');
 
 // Display list of all ShifTinstances
-exports.shiftinstance_list = function(req, res) {
+exports.shiftinstance_list = function (req, res) {
     res.send('NOT IMPLEMENTED: ShifTinstance list');
 };
 
 // Display detail page for a specific ShiftInstance
-exports.shiftinstance_detail = function(req, res, next) {
+exports.shiftinstance_detail = function (req, res, next) {
     ShiftInstance.findById(req.params.id)
         .populate('firefighter')
         .populate('pump')
-        .exec(function(err, result) {
+        .exec(function (err, result) {
             if (err) {
                 return next(err);
             }
@@ -30,10 +30,10 @@ exports.shiftinstance_detail = function(req, res, next) {
 };
 
 //display ShiftInstance landing on get
-exports.shiftinstance_landing_get = function(req, res, next) {
+exports.shiftinstance_landing_get = function (req, res, next) {
     FireFighter.find({})
         .then((result) => {
-            let sortResult = result.sort((a, b) => {                
+            let sortResult = result.sort((a, b) => {
                 return a.number - b.number;
             })
             res.render('shiftinstance_landing', {
@@ -44,81 +44,32 @@ exports.shiftinstance_landing_get = function(req, res, next) {
 }
 
 //handle ShiftInstance landing on post
-exports.shiftinstance_landing_post = function(req, res, next) {
+exports.shiftinstance_landing_post = function (req, res, next) {
     req.sanitize('firefighters').escape();
     req.sanitize('firefighters').trim();
     res.redirect('create/?valid=' + req.body.firefighters);
 }
 
 //Display ShiftInstance create form on GET
-exports.shiftinstance_create_get = function(req, res, next) {
-    //const firefighters = req.query.valid.split(',');
-
-    const promise_appliance_list = Appliance.find({})
-        .populate('qualifications')
-        .exec()
-
-    const promise_firefighter_list = FireFighter.find({})
-        .populate('qualifications')
-        .exec()
-
-    const promise_qualification_list = Qualification.find({})
-        .exec()
-
-    Promise.all([promise_appliance_list, promise_firefighter_list, promise_qualification_list])
-        .then(([appliance_list, firefighter_list, qualification_list]) => {
-            return Promise.all(appliance_list.map((appliance) => {
-                return Promise.all(firefighter_list.map((firefighter) => {
-                        return ShiftInstance.find()
-                            .where('pump').eq(appliance._id)
-                            .where('firefighter').eq(firefighter._id)
-                            .populate('pump firefighter')
-                            .then((results) => {
-                                if (!results.length) {
-                                    return [firefighter, []]
-                                } else {
-                                    return [firefighter, results]
-                                }
-
-                            });
-                    }))
-                    .then((results) => {
-                        let sortResult = results.sort((a, b) => {
-                            if (a[1].length === b[1].length) {
-                                return a[0].number - b[0].number;
-                            } else {
-                                return a[1].length - b[1].length;
-                            }
-                        })
-                        // for (let i = 0; i < sortResult.length - 1; i++) {
-                        //     if (_.intersectionWith(sortResult[i][0].qualifications, appliance.qualifications, _.isEqual).length < 1) {
-                        //         sortResult.push(sortResult.splice(i, 1)[0]);
-                        //         console.log(sortResult)
-                        //     } else {
-                        //         console.log(i)
-                        //     }
-                        // }
-                        //console.log(sortResult);
-                        return [appliance, sortResult]
-                    })
-            }))
-        })
-        .then((appliances) => {
-
-            res.render('shiftinstance_form', {
-                title: 'Shift create form',
-                appliance_list: appliances
-            })
-        })
-        .catch((err) => {
-            return next(err);
-        })
-
+exports.shiftinstance_create_get = function (req, res, next) {
+    //const firefighters = req.query.valid.split(',');    
+    ShiftInstance.aggregate()
+    .lookup({from: 'appliances', localField: 'pump', foreignField: '_id', as: 'pump'})
+    .lookup({from: 'firefighters', localField: 'firefighter', foreignField: '_id', as: 'firefighter'})
+    .unwind('$pump')
+    .unwind('$firefighter')
+    .group({_id: {pump:'$pump.name', ff: '$firefighter.name'}, count: {$sum: 1}})
+    .then(result => {
+        console.log(result);
+    })
+    .catch(err => {
+        return next(err);
+    })
 }
 
 //     
 // Handle ShiftInstance create on POST
-exports.shiftinstance_create_post = function(req, res, next) {
+exports.shiftinstance_create_post = function (req, res, next) {
     var appliance_arr = [];
     var shiftinstance_array = [];
 
@@ -186,8 +137,8 @@ exports.shiftinstance_create_post = function(req, res, next) {
             } else {
 
                 Promise.all(shiftinstance_array.map((shiftinstance) => {
-                        shiftinstance.save();
-                    }))
+                    shiftinstance.save();
+                }))
                     .then(() => {
                         req.flash('success', { msg: 'Shift created successfully' });
                         res.redirect('create');
@@ -206,32 +157,32 @@ exports.shiftinstance_create_post = function(req, res, next) {
 
 
 // Display ShiftInstance delete form on GET
-exports.shiftinstance_delete_get = function(req, res) {
+exports.shiftinstance_delete_get = function (req, res) {
     res.send('NOT IMPLEMENTED: ShifTinstance delete GET');
 };
 
 // Handle ShiftInstance delete on POST
-exports.shiftinstance_delete_post = function(req, res) {
+exports.shiftinstance_delete_post = function (req, res) {
     res.send('NOT IMPLEMENTED: ShifTinstance delete POST');
 };
 
 // Display ShiftInstance update form on GET
-exports.shiftinstance_update_get = function(req, res, next) {
+exports.shiftinstance_update_get = function (req, res, next) {
     req.sanitize('id').escape();
     req.sanitize('id').trim();
 
     //Get shiftInstance, firefighter for form
     async.parallel({
-        firefighter_list: function(callback) {
+        firefighter_list: function (callback) {
             FireFighter.find(callback);
         },
-        current_shiftinstance: function(callback) {
+        current_shiftinstance: function (callback) {
             ShiftInstance.findById(req.params.id)
                 .populate('firefighter')
                 .populate('pump')
                 .exec(callback);
         }
-    }, function(err, results) {
+    }, function (err, results) {
         if (err) {
             return next(err);
         }
@@ -244,7 +195,7 @@ exports.shiftinstance_update_get = function(req, res, next) {
 };
 
 // Handle shiftinstance update on POST
-exports.shiftinstance_update_post = function(req, res, next) {
+exports.shiftinstance_update_post = function (req, res, next) {
     req.sanitize('id').escape();
     req.sanitize('id').trim();
 
@@ -262,7 +213,7 @@ exports.shiftinstance_update_post = function(req, res, next) {
         //rerender ff with error info
         //get all quals for form
         FireFighter.find({})
-            .exec(function(err, firefighter_list) {
+            .exec(function (err, firefighter_list) {
                 if (err) {
                     return next(err);
                 }
@@ -279,7 +230,7 @@ exports.shiftinstance_update_post = function(req, res, next) {
         //data from form is valid. update record
         ShiftInstance.findByIdAndUpdate(req.params.id, {
             firefighter: req.body.firefighter
-        }, {}, function(err, theshiftinstance) {
+        }, {}, function (err, theshiftinstance) {
             if (err) {
                 return next(err);
             }

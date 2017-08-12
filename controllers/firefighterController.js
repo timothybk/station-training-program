@@ -7,28 +7,28 @@ var shared_methods = require('../shared_methods');
 
 var async = require('async');
 
-exports.index = function(req, res) {
+exports.index = function (req, res) {
     async.parallel({
-        firefighter_count: function(callback) {
+        firefighter_count: function (callback) {
             FireFighter.count(callback);
         },
-        drill_count: function(callback) {
+        drill_count: function (callback) {
             Drill.count(callback);
         },
-        drillinstance_count: function(callback) {
+        drillinstance_count: function (callback) {
             DrillInstance.count(callback);
         },
-    }, function(err, results) {
+    }, function (err, results) {
         res.render('index', { title: 'Drill Reporting Home', error: err, data: results });
     });
 };
 
 // Display list of all firefighters
-exports.firefighter_list = function(req, res, next) {
+exports.firefighter_list = function (req, res, next) {
 
     FireFighter.find({}, 'name rank number')
         .sort('-rank _id')
-        .exec(function(err, list_firefighter) {
+        .exec(function (err, list_firefighter) {
             if (err) {
                 return next(err);
             }
@@ -37,7 +37,7 @@ exports.firefighter_list = function(req, res, next) {
 };
 
 // Display detail page for a specific firefighter
-exports.firefighter_detail = function(req, res, next) {
+exports.firefighter_detail = function (req, res, next) {
 
     const promiseA = FireFighter.findById(req.params.id)
         .populate('qualifications')
@@ -70,8 +70,8 @@ exports.firefighter_detail = function(req, res, next) {
 }
 
 // Display firefighter drill record in FRNSW format
-exports.firefighter_drill_record = function(req, res, next) {
-    shared_methods.firefighter_find_all_drills(req.params.id, function(results) {
+exports.firefighter_drill_record = function (req, res, next) {
+    shared_methods.firefighter_find_all_drills(req.params.id, function (results) {
         res.render('firefighter_drill_record', {
             title: 'FireFighter',
             firefighter: results.firefighter,
@@ -83,7 +83,7 @@ exports.firefighter_drill_record = function(req, res, next) {
 };
 
 // Display firefighter create form on GET
-exports.firefighter_create_get = function(req, res, next) {
+exports.firefighter_create_get = function (req, res, next) {
     Qualification.find({}, 'name')
         .exec()
         .then((result) => {
@@ -96,7 +96,7 @@ exports.firefighter_create_get = function(req, res, next) {
 };
 
 // Handle firefighter create on POST
-exports.firefighter_create_post = function(req, res, next) {
+exports.firefighter_create_post = function (req, res, next) {
 
     req.checkBody('number', 'Number must not be empty.').notEmpty();
     req.checkBody('rank', 'Rank must not be empty.').notEmpty();
@@ -127,10 +127,10 @@ exports.firefighter_create_post = function(req, res, next) {
             .exec()
             .then((result) => {
                 //mark selected qualifications as checked
-                for (var i = 0; i < qualifications.length; i++) {
-                    if (firefighter.qualifications.indexOf(qualifications[i]._id > -1)) {
+                for (var i = 0; i < result.length; i++) {
+                    if (firefighter.qualifications.indexOf(result[i]._id > -1)) {
                         //Current qualifications is selected. Set 'checked' flag.
-                        qualifications[i].checked = 'true';
+                        result[i].checked = 'true';
                     }
                 }
                 for (var i = errors.length - 1; i >= 0; i--) {
@@ -151,7 +151,7 @@ exports.firefighter_create_post = function(req, res, next) {
             .exec()
             .then((found_firefighter) => {
                 if (found_firefighter) {
-                    req.flash('info', {msg: 'FireFighter Already Exists'});
+                    req.flash('info', { msg: 'FireFighter Already Exists' });
                     res.redirect(found_firefighter.url);
                 } else {
                     firefighter.save()
@@ -168,26 +168,26 @@ exports.firefighter_create_post = function(req, res, next) {
 };
 
 // Display firefighter delete form on GET
-exports.firefighter_delete_get = function(req, res) {
+exports.firefighter_delete_get = function (req, res) {
     res.send('NOT IMPLEMENTED: FireFighter delete GET');
 };
 
 // Handle firefighter delete on POST
-exports.firefighter_delete_post = function(req, res) {
+exports.firefighter_delete_post = function (req, res) {
     res.send('NOT IMPLEMENTED: FireFighter delete POST');
 };
 
 // Display firefighter update form on GET
-exports.firefighter_update_get = function(req, res, next) {
+exports.firefighter_update_get = function (req, res, next) {
     req.sanitize('id').escape();
     req.sanitize('id').trim();
 
     //Get firefighters, qualifications for form
-    promiseA = FireFighter.findById(req.params.id)
+    const promiseA = FireFighter.findById(req.params.id)
         .populate('qualifications')
         .exec()
 
-    promiseB = Qualification.find({})
+    const promiseB = Qualification.find({})
         .exec()
 
     Promise.all([promiseA, promiseB])
@@ -214,7 +214,7 @@ exports.firefighter_update_get = function(req, res, next) {
 };
 
 // Handle firefighter update on POST
-exports.firefighter_update_post = function(req, res, next) {
+exports.firefighter_update_post = function (req, res, next) {
     //sanitize id passed in
     req.sanitize('id').escape();
     req.sanitize('id').trim();
@@ -262,7 +262,7 @@ exports.firefighter_update_post = function(req, res, next) {
             })
     } else {
         //data from form is valid. update record
-        FireFighter.findByIdAndUpdate(req.params.id, firefighter, {}, function(err, thefirefighter) {
+        FireFighter.findByIdAndUpdate(req.params.id, firefighter, {}, function (err, thefirefighter) {
             if (err) {
                 return next(err);
             }
