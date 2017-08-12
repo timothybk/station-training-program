@@ -52,13 +52,13 @@ exports.shiftinstance_landing_post = function(req, res, next) {
 
 //Display ShiftInstance create form on GET
 exports.shiftinstance_create_get = function(req, res, next) {
-    const firefighters = req.query.valid.split(',');
+    //const firefighters = req.query.valid.split(',');
 
     const promise_appliance_list = Appliance.find({})
         .populate('qualifications')
         .exec()
 
-    const promise_firefighter_list = FireFighter.find({ _id: firefighters })
+    const promise_firefighter_list = FireFighter.find({})
         .populate('qualifications')
         .exec()
 

@@ -19,6 +19,7 @@ const expressValidator = require('express-validator');
 const expressStatusMonitor = require('express-status-monitor');
 const sass = require('node-sass-middleware');
 const multer = require('multer');
+const lodash = require('lodash');
 
 const upload = multer({ dest: path.join(__dirname, 'uploads') });
 
