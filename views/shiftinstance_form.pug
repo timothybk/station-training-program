@@ -16,19 +16,37 @@ block content
 				option(value='day') Day Shift
 				option(value='night') Night Shift
 
-		each appliance, index in appliance_list
+		each pump, key in results
 			hr
-			p=appliance[0].name
-			for seat in appliance[0].seats
+			h2=pump.appliance.name
+			each seat in pump.appliance.seats
 				.form-group
-					label(for=appliance[0].name + seat) #{appliance[0].name} #{seat}
-					select(id=appliance[0].name + seat, class='form-control', type='select', placeholder='select firefighter', name=appliance[0].name + seat, required='true')
-						for ff in appliance[1]
-							if ff[1] === 0
-								option(value=ff[0]._id) #{ff[0].fulltitle} : 0
+					label(for=pump.appliance.name + seat) #{pump.appliance.name} #{seat}
+					select(id=pump.appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=pump.appliance.name + seat, required='true')
+						-const notQual = [];
+						-const pumpQual = [];
+						if pump.appliance.qualifications.length > 0
+								each qual in pump.appliance.qualifications
+									-pumpQual.push(qual.name)					
+						each ff in pump.haves
+							-const ffQual = [];							
+							if ff[0].qualifications.length > 0
+								each qual in ff[0].qualifications
+									-ffQual.push(qual.name)
+							if ff[0].name === 'dummy'
+								-notQual.push(ff);
+							else if seat === 'driver' && ffQual.includes('md')
+								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
+							else if pumpQual.some(v => ffQual.includes(v))
+								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
+							else if pumpQual.length <= 0 && seat !== 'driver'
+								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
 							else
-								option(value=ff[0]._id) #{ff[0].fulltitle} : #{ff[1].length}
-								
-
-		
+								-notQual.push(ff);
+						option(disabled="disabled") ----
+						each ff in pump.haveNots
+							option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
+						each ff in notQual
+							option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}						
+				
 		button.btn.btn-primary(type='submit') Submit

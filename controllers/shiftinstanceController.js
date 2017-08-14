@@ -53,18 +53,88 @@ exports.shiftinstance_landing_post = function (req, res, next) {
 //Display ShiftInstance create form on GET
 exports.shiftinstance_create_get = function (req, res, next) {
     //const firefighters = req.query.valid.split(',');    
-    ShiftInstance.aggregate()
-    .lookup({from: 'appliances', localField: 'pump', foreignField: '_id', as: 'pump'})
-    .lookup({from: 'firefighters', localField: 'firefighter', foreignField: '_id', as: 'firefighter'})
-    .unwind('$pump')
-    .unwind('$firefighter')
-    .group({_id: {pump:'$pump.name', ff: '$firefighter.name'}, count: {$sum: 1}})
-    .then(result => {
-        console.log(result);
-    })
-    .catch(err => {
-        return next(err);
-    })
+    const promiseA = FireFighter.find({})
+        .populate('qualifications')
+        .exec()
+
+    const promiseB = Appliance.find({})
+        .populate('qualifications')
+        .exec()
+
+    Promise.all([promiseA, promiseB])
+        .then(([firefighters, appliances]) => {
+            return Promise.all(firefighters.map((firefighter) => {
+                return ShiftInstance.aggregate()
+                    .match({ 'firefighter': firefighter._id })
+                    .lookup({ from: 'firefighters', localField: 'firefighter', foreignField: '_id', as: 'firefighter' })
+                    .unwind('$firefighter')
+                    .lookup({ from: 'appliances', localField: 'pump', foreignField: '_id', as: 'pump' })
+                    .unwind('$pump')
+                    .group({ _id: '$pump.name', count: { $sum: 1 } })
+                    .sort('count')
+                    .then(result => {
+                        const pumps = {}
+                        
+                        for (let pump of appliances) {
+                            const record = result.find(truck => {
+                                return truck._id === pump.name;
+                            })
+                            if (record) {
+                                pumps[pump.name] = record.count;
+                                // nonZero++;
+                            } else {
+                                pumps[pump.name] = 0;
+                            }
+                        }
+                        let sum = 0;
+                        for (var key in pumps) {
+                            if (pumps.hasOwnProperty(key)) {
+                                sum += pumps[key];
+                            }
+                        }
+                        pumps.total = sum;
+                        pumps.avg = Math.round(pumps.total / appliances.length);
+                        return pumps;
+                    })
+            }))
+                .then(result => {
+                    const pumpObj = {};
+
+                    for (let pump of appliances) {
+                        const ffArray = [];
+                        pumpObj[pump.name] = {};
+                        pumpObj[pump.name].appliance = pump;
+                        for (var i = 0; i < result.length; i++) {
+                            ffArray.push([firefighters[i], result[i][pump.name]])
+                        }
+                        ffArray.sort((a, b) => {
+                            return a[1] - b[1];
+                        })
+                        for (var i = 0; i < ffArray.length; i++) {
+                            if (ffArray[i][1] !== 0) {
+                                pumpObj[pump.name].haveNots = ffArray.slice(0, i);
+                                pumpObj[pump.name].haves = ffArray.slice(i, ffArray.length -1);
+                                i = ffArray.length + 1;
+                            }
+                            
+                        }
+                    }
+
+                    return pumpObj;
+                })
+        })
+        .then(result => {
+            res.render('shiftinstance_form', {
+                title: 'shift form',
+                results: result
+            })
+        })
+        .catch(err => {
+            return next(err);
+        })
+
+
+
 }
 
 //     
