@@ -25,7 +25,7 @@ exports.qualification_detail = function(req, res, next) {
 // Display Qualification create form on GET
 exports.qualification_create_get = function(req, res, next) {
     res.render('qualification_form', {
-        title: 'Qualification Form'
+        title: 'Create Qualification'
     })
 };
 
@@ -48,10 +48,12 @@ exports.qualification_create_post = function(req, res, next) {
 
     if (errors) {
         //if there are errors render the form again, passing errors and qualification values
+        for (var i = errors.length - 1; i >= 0; i--) {
+            req.flash('errors', {msg: errors[i].msg})
+        }
         res.render('qualification_form', {
             title: 'Create Qualification',
-            qualification: qualification,
-            errors: errors
+            qualification: qualification
         });
         return;
     }
@@ -76,6 +78,7 @@ exports.qualification_create_post = function(req, res, next) {
                             return next(err);
                         }
                         //qualifiction saved
+                        req.flash('success', {msg: 'Qualification Created Successfully'});
                         res.redirect(qualification.url)
                     });
                 }

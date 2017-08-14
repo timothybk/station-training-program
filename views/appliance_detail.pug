@@ -1,0 +1,18 @@
+extends layout
+
+block content
+	h1 #{title}: #{appliance.name}
+
+	p #[strong Seats:]
+	ul
+		each seat in appliance.seats
+			li
+				a(href='#') #{seat}
+
+	p #[strong Qualifications:]
+	ul
+		each qualification in appliance.qualifications
+			li
+				a(href=qualification.url) #{qualification.name}
+		else
+			li there are no qualifications for this appliance

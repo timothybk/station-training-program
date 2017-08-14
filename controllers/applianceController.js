@@ -1,40 +1,27 @@
 var Appliance = require('../models/appliance');
 var Qualification = require('../models/qualification');
+var shared_methods = require('../shared_methods');
 
 // Display list of all Appliances
 exports.appliance_list = function(req, res, next) {
-    Appliance.find({}, 'name qualifications')
-        .populate('qualifications')
-        .exec(function(err, list_appliance) {
-            if (err) {
-                return next(err);
-            }
-            res.render('appliance_list', { title: 'Appliance List', appliance_list: list_appliance });
-        });
+    shared_methods.appliance_find_all(function(results) {
+        res.render('appliance_list', { title: 'Appliance List', appliance_list: results });
+        })
 };
 
 
 // Display detail page for a specific Appliance
 exports.appliance_detail = function(req, res, next) {
-    Appliance.findById(req.params.id)
-        .populate('qualifications')
-        .exec(function(err, appliance) {
-            if (err) {
-                return next(err);
-            }
-            res.render('appliance_detail', { title: 'Appliance Detail', appliance: appliance });
+    shared_methods.appliance_findById(req.params.id, function(result) {
+        res.render('appliance_detail', { title: 'Appliance Detail', appliance: result });
         });
 
 };
 
 // Display Appliance create form on GET
 exports.appliance_create_get = function(req, res, next) {
-    Qualification.find({}, 'name')
-        .exec(function(err, qualifications) {
-            if (err) {
-                return next(err);
-            }
-            res.render('appliance_form', { title: 'Create Appliance', qualification_list: qualifications })
+    shared_methods.qualification_find_all(function (results) {
+        res.render('appliance_form', { title: 'Create Appliance', qualification_list: results })
         })
 };
 
@@ -59,11 +46,7 @@ exports.appliance_create_post = function(req, res, next) {
     var errors = req.validationErrors();
     if (errors) {
         //some problems so form neads to be rerendered
-        Qualification.find({}, 'name')
-            .exec(function(err, qualifications) {
-                if (err) {
-                    return next(err);
-                }
+        shared_methods.qualification_find_all(function (results) {
                 //mark selected qualifications as checked
                 for (i = 0; i < qualifications.length; i++) {
                     if (appliance.qualifications.indexOf(qualifications[i]._id > -1)) {
@@ -71,7 +54,7 @@ exports.appliance_create_post = function(req, res, next) {
                         qualifications[i].checked = 'true';
                     }
                 }
-                res.render('appliance_form', { title: 'Create Appliance', qualification_list: qualifications, appliance: appliance, errors: errors });
+                res.render('appliance_form', { title: 'Create Appliance', qualification_list: results, appliance: appliance, errors: errors });
             });
     } else {
         //data from form is valid
@@ -80,6 +63,7 @@ exports.appliance_create_post = function(req, res, next) {
                 return next(err);
             }
             //redirect to new ff record
+            req.flash('success', {msg: 'Appliance Created Successfully'});
             res.redirect(appliance.url);
         });
     }

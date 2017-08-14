@@ -5,6 +5,7 @@ block content
 	h1=title
 
 	form(method='POST' action='')
+		input(type='hidden', name='_csrf', value=_csrf)
 		.form-group
 			label(for='date') Date:
 			input#date.form-control(type='date' name='date' required='true' value=(undefined===shiftinstance ? '' : shiftinstance.date))
@@ -15,37 +16,37 @@ block content
 				option(value='day') Day Shift
 				option(value='night') Night Shift
 
-
-		each appliance, index in appliance_list
-
+		each pump, key in results
 			hr
-			each seat in appliance.seats
+			h2=pump.appliance.name
+			each seat in pump.appliance.seats
 				.form-group
-					label(for=appliance.name + seat) #{appliance.name} #{seat}
-					select(id=appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=appliance.name + seat, required='true')
-
-						if (seat == 'driver' && appliance.name != 'bronto' && appliance.name != 'salvage')
-							each firefighter in md_list[index]
-								if (firefighter.rank != 'Station Officer')
-									option(value=firefighter._id) #{firefighter.fulltitle}
-						else if (appliance.qualifications.length > 0)
-							if (appliance.name == 'rescuepump' && seat == 'three')
-								each firefighter in ranking_lists[index]
-									if (firefighter.rank != 'Station Officer')
-										option(value=firefighter._id) #{firefighter.fulltitle}
-							else	
-								each firefighter in ranking_lists[index]
-
-									if (firefighter.rank != 'Station Officer')
-										each val in firefighter.qualifications
-											if (val.name == appliance.qualifications[0].name)
-												option(value=firefighter._id) #{firefighter.fulltitle}
-
-						else
-							each firefighter in ranking_lists[index]
-								if (firefighter.rank != 'Station Officer')
-									option(value=firefighter._id) #{firefighter.fulltitle}
-		input(type='hidden', name='_csrf', value=_csrf)
-						
-
+					label(for=pump.appliance.name + seat) #{pump.appliance.name} #{seat}
+					select(id=pump.appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=pump.appliance.name + seat, required='true')
+						-const notQual = [];
+						-const pumpQual = [];
+						if pump.appliance.qualifications.length > 0
+								each qual in pump.appliance.qualifications
+									-pumpQual.push(qual.name)					
+						each ff in pump.haves
+							-const ffQual = [];							
+							if ff[0].qualifications.length > 0
+								each qual in ff[0].qualifications
+									-ffQual.push(qual.name)
+							if ff[0].name === 'dummy'
+								-notQual.push(ff);
+							else if seat === 'driver' && ffQual.includes('md')
+								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
+							else if pumpQual.some(v => ffQual.includes(v))
+								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
+							else if pumpQual.length <= 0 && seat !== 'driver'
+								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
+							else
+								-notQual.push(ff);
+						option(disabled="disabled") ----
+						each ff in pump.haveNots
+							option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
+						each ff in notQual
+							option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}						
+				
 		button.btn.btn-primary(type='submit') Submit

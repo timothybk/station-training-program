@@ -1,0 +1,23 @@
+extends layout
+
+block content
+	p(class='fa fa-lg fa-pull-right') Number, Rank and Name: #{firefighter.fulltitle} 
+	table(class='table table-bordered')
+		thead
+			tr
+				th STP No.
+				th STP Title
+				th Details/Location
+				th Station Commander's No. and Initial
+				th Date
+		tbody
+			each val in drillinstance_list
+				tr
+					td #{val.drill.code}
+					td 
+						!=val.drill.name
+					td Blank
+					td #{val.leader.number}
+					td #{val.date_short}
+
+	

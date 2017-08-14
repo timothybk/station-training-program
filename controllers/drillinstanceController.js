@@ -34,27 +34,46 @@ exports.drillinstance_detail = function(req, res, next) {
 
 // Display DrillInstance create form on GET
 exports.drillinstance_create_get = function(req, res, next) {
-    async.parallel({
-        firefighter_list: function(callback) {
-            FireFighter.find({}, 'name rank number')
-                .exec(callback);
-        },
-        drill_list: function(callback) {
-            Drill.find({}, 'name code')
-                .exec(callback);
-        },
-    }, function(err, results) {
-        if (err) {
-            return next(err);
-        }
-        res.render('drillinstance_form', {
-            title: 'Record Completed Drill',
-            firefighter_list: results.firefighter_list,
-            drill_list: results.drill_list
-        });
+    const promisea = FireFighter.find({})
+        .exec();
 
-    })
-};
+    const promiseb = Drill.find({})
+        .exec();
+
+    Promise.all([promisea, promiseb])
+        .then(function(values) {
+            res.render('drillinstance_form', {
+                title: 'Record Completed Drill',
+                firefighter_list: values[0],
+                drill_list: values[1]
+            })
+        })
+        .catch(function(err){
+            return next(err);
+        })
+}
+
+//     async.parallel({
+//         firefighter_list: function(callback) {
+//             FireFighter.find({}, 'name rank number')
+//                 .exec(callback);
+//         },
+//         drill_list: function(callback) {
+//             Drill.find({}, 'name code')
+//                 .exec(callback);
+//         },
+//     }, function(err, results) {
+//         if (err) {
+//             return next(err);
+//         }
+//         res.render('drillinstance_form', {
+//             title: 'Record Completed Drill',
+//             firefighter_list: results.firefighter_list,
+//             drill_list: results.drill_list
+//         });
+
+//     })
+// };
 
 // Handle DrillInstance create on POST
 exports.drillinstance_create_post = function(req, res, next) {
@@ -94,6 +113,7 @@ exports.drillinstance_create_post = function(req, res, next) {
                 return next(err);
             }
             //Drillinstance saved. Redirect to drillinstance detail page
+            req.flash('success', { msg: 'Drill Record Created Successfully' });
             res.redirect(drillinstance.url);
         });
 

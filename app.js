@@ -19,6 +19,7 @@ const expressValidator = require('express-validator');
 const expressStatusMonitor = require('express-status-monitor');
 const sass = require('node-sass-middleware');
 const multer = require('multer');
+const lodash = require('lodash');
 
 const upload = multer({ dest: path.join(__dirname, 'uploads') });
 
@@ -169,6 +170,9 @@ app.post('/firefighter/:id/update', firefighter_controller.firefighter_update_po
 //GET request for one firefighter
 app.get('/firefighter/:id', firefighter_controller.firefighter_detail);
 
+//GET request firefighter drill record
+app.get('/firefighter/:id/drillrecord', firefighter_controller.firefighter_drill_record);
+
 //GET request to list all firefighters
 app.get('/firefighters', firefighter_controller.firefighter_list);
 
@@ -280,6 +284,12 @@ app.get('/qualifications', qualification_controller.qualification_list);
 
 /*GET request for creating a ff*/
 app.get('/shiftinstance/create', shiftinstance_controller.shiftinstance_create_get);
+
+//GET request for creating shiftinstance landing
+app.get('/shiftinstance/land', shiftinstance_controller.shiftinstance_landing_get);
+
+//POST request for creating shiftinstance landing
+app.post('/shiftinstance/land', shiftinstance_controller.shiftinstance_landing_post);
 
 //POST request for creating shiftinstance
 app.post('/shiftinstance/create', shiftinstance_controller.shiftinstance_create_post);
