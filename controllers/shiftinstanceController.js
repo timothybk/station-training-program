@@ -41,19 +41,22 @@ exports.shiftinstance_landing_get = function (req, res, next) {
                 firefighter_list: sortResult
             });
         })
+        .catch(err =>{
+            return next (err);
+        })
 }
 
 //handle ShiftInstance landing on post
 exports.shiftinstance_landing_post = function (req, res, next) {
-    req.sanitize('firefighters').escape();
-    req.sanitize('firefighters').trim();
-    res.redirect('create/?valid=' + req.body.firefighters);
+        req.sanitize('firefighters').escape();
+        req.sanitize('firefighters').trim();
+        res.redirect('create/?valid=' + req.body.firefighters);
 }
 
 //Display ShiftInstance create form on GET
 exports.shiftinstance_create_get = function (req, res, next) {
-    //const firefighters = req.query.valid.split(',');    
-    const promiseA = FireFighter.find({})
+    const firefighters = req.query.valid.split(',');    
+    const promiseA = FireFighter.find({_id: firefighters})
         .populate('qualifications')
         .exec()
 
@@ -133,7 +136,6 @@ exports.shiftinstance_create_get = function (req, res, next) {
                                 pumpQual.push(qual.name);
                             }
                         }
-                        console.log(pump.name)
                         for (var i = 0; i < result.length; i++) {
                             const ffQual = [];
                             if (firefighters[i].qualifications.length > 0) {
@@ -145,37 +147,30 @@ exports.shiftinstance_create_get = function (req, res, next) {
                             
                             switch (true) {
                                 case firefighters[i].rank === 'Station Officer':
-                                    console.log(firefighters[i].name, 'station officer')
                                     break;
                                 case firefighters[i].name === 'dummy':
                                     ffBackSecond.push([firefighters[i], result[i][pump.name].back]);
                                     ffDriverSecond.push([firefighters[i], result[i][pump.name].driver]);
-                                    console.log(firefighters[i].name, 'dummy')
                                     break;
                                 case pumpQual.length > 0 && pumpQual.some(v => ffQual.includes(v)):
                                     ffBackMain.push([firefighters[i], result[i][pump.name].back]);
                                     ffDriverMain.push([firefighters[i], result[i][pump.name].driver]);
-                                    console.log(firefighters[i].name, 'qual pump has qual')
                                     break;
                                 case pumpQual.length > 0 && ffQual.includes('md') && pump.name === 'rescuepump':
                                     ffDriverMain.push([firefighters[i], result[i][pump.name].driver]);
                                     ffBackSecond.push([firefighters[i], result[i][pump.name].back])
-                                    console.log(firefighters[i].name, 'rescue pump with md')
                                     break;
                                 case pumpQual.length > 0:
                                     ffDriverSecond.push([firefighters[i], result[i][pump.name].driver]);
                                     ffBackSecond.push([firefighters[i], result[i][pump.name].back]);
-                                    console.log(firefighters[i].name, 'qual pump not rescupump no qual')
                                     break;
                                 case pumpQual.length <= 0 && ffQual.includes('md'):
                                     ffBackMain.push([firefighters[i], result[i][pump.name].back]);
                                     ffDriverMain.push([firefighters[i], result[i][pump.name].driver]);
-                                    console.log(firefighters[i].name, 'non qual pump with md')
                                     break;
                                 default:
                                     ffBackMain.push([firefighters[i], result[i][pump.name].back]);
                                     ffDriverSecond.push([firefighters[i], result[i][pump.name].driver])
-                                    console.log(firefighters[i].name, 'default')
                                     break;
                             }
                         }
@@ -192,6 +187,9 @@ exports.shiftinstance_create_get = function (req, res, next) {
                         ffDriverSecond.sort((a, b) => {
                             return a[1] - b[1];
                         })
+                        for (var i = 0; i < pump.seats.length; i++) {
+                            ffBackMain[i]['selected' + (i + 1)] = true;                          
+                        }
                         // set 'results' as key and array of [Firefighter Object, count] as value
                         pumpObj[pump.name].backMain = ffBackMain;
                         pumpObj[pump.name].backSecond = ffBackSecond;

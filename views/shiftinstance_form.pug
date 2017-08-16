@@ -5,38 +5,62 @@ block content
 	h1=title
 
 	form(method='POST' action='')
-		input(type='hidden', name='_csrf', value=_csrf)
-		.form-group
-			label(for='date') Date:
-			input#date.form-control(type='date' name='date' required='true' value=(undefined===shiftinstance ? '' : shiftinstance.date))
-
-		.form-group
-			label(for='shift') Shift:
-			select#shift.form-control(type='select' placeholder='Day/Night' name='shift' required='true')
-				option(value='day') Day Shift
-				option(value='night') Night Shift
-
-		each pump in results
-			hr
-			h2=pump.appliance.name
-			each seat in pump.appliance.seats
+		.row
+			.col-sm-4
+				h2 recommended
+			.col-sm-8
+				h2 select
+		.row
+			.col-sm-4
+				h3 date
+			.col-sm-8
+				input(type='hidden', name='_csrf', value=_csrf)
 				.form-group
-					label(for=pump.appliance.name + seat) #{pump.appliance.name} #{seat}
-					select(id=pump.appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=pump.appliance.name + seat, required='true')
-						
-						//- check if firefighter should be added to main list 
-						if seat === 'driver'
-							each ff in pump.driverMain
-								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
-							option(disabled="disabled") ----
-							each ff in pump.driverSecond
-								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
-							
-						else
-							each ff in pump.backMain								
-								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
-							option(disabled="disabled") ----
-							each ff in pump.backSecond
-								option(value=ff[0]._id) #{ff[0].fulltitle}: #{ff[1]}
+					label(for='date') Date:
+					input#date.form-control(type='date' name='date' required='true' value=(undefined===shiftinstance ? '' : shiftinstance.date))
+		.row
+			.col-sm-4
+				h3 shift
+			.col-sm-8
+				.form-group
+					label(for='shift') Shift:
+					select#shift.form-control(type='select' placeholder='Day/Night' name='shift' required='true')
+						option(value='day') Day Shift
+						option(value='night') Night Shift
 
-		button.btn.btn-primary(type='submit') Submit
+		each pump, i in results
+			.row
+				.col-sm-4
+					h3=pump.appliance.name
+				.col-sm-8
+					h3=pump.appliance.name
+			each seat, i in pump.appliance.seats
+				.row
+					.col-sm-4
+						if seat === 'driver'
+							h4=pump.driverMain[0][0].fulltitle
+						else
+							each ff in pump.backMain
+								if ff['selected' + i]
+									h4=ff[0].fulltitle
+					.col-sm-8
+						.form-group
+							label(for=pump.appliance.name + seat) #{pump.appliance.name} #{seat}
+							select(id=pump.appliance.name + seat, class='form-control', type='select', placeholder='select firefighter', name=pump.appliance.name + seat, required='true')
+										
+								//- check if firefighter should be added to main list 
+								if seat === 'driver'
+									each ff in pump.driverMain
+										option(value=ff[0]._id, selected = ff.selected) #{ff[0].fulltitle}: #{ff[1]}
+									option(disabled="disabled") ----
+									each ff in pump.driverSecond
+										option(value=ff[0]._id, selected = ff.selected) #{ff[0].fulltitle}: #{ff[1]}
+											
+								else
+									each ff in pump.backMain								
+										option(value=ff[0]._id, selected = ff['selected' + i]) #{ff[0].fulltitle}: #{ff[1]}
+									option(disabled="disabled") ----
+									each ff in pump.backSecond
+										option(value=ff[0]._id, selected = ff.selected) #{ff[0].fulltitle}: #{ff[1]}
+
+	button.btn.btn-primary(type='submit') Submit
