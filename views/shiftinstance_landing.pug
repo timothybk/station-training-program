@@ -5,7 +5,7 @@ block content
         input(type='hidden', name='_csrf', value=_csrf)
         .form-group
             label(for='firefighters') Firefighters on duty:
-            select#firefighters.form-control(type='select' placeholder='Firefighters on shift' name='firefighters' class='selectpicker' multiple required='true')
+            select#firefighters.form-control(type='select' placeholder='Firefighters on shift' name='firefighters' class='selectpicker' multiple data-live-search="true" required='true')
                 for firefighter in firefighter_list
                     if drillinstance
                         option(value=firefighter._id selected=(firefighter._id.toString()==landinstance.firefighter ? 'selected' : false)) #{firefighter.fulltitle}
